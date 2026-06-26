@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Tester · export for AI</title>
+  <title>API Tester · delete + confirm</title>
   <style>
     /* ----- theme variables (default dark) ----- */
     * {
@@ -147,9 +148,10 @@
       font-size: 12px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       margin-bottom: 3px;
       transition: background 0.1s;
+      position: relative;
     }
     .hist-item:hover { background: var(--hover-bg); }
     .hist-item.active {
@@ -178,7 +180,12 @@
       white-space: nowrap;
       flex: 1;
     }
-    .hist-rename {
+    .hist-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .hist-rename, .hist-delete {
       background: transparent;
       border: none;
       color: var(--muted);
@@ -186,11 +193,15 @@
       cursor: pointer;
       padding: 2px 6px;
       border-radius: 4px;
-      flex-shrink: 0;
+      transition: 0.1s;
     }
     .hist-rename:hover {
       background: var(--border);
       color: var(--text);
+    }
+    .hist-delete:hover {
+      background: var(--err);
+      color: #fff;
     }
 
     /* main */
@@ -553,6 +564,72 @@
     .modal-actions button:hover {
       opacity: 0.85;
     }
+
+    /* confirm dialog (custom) */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .confirm-box h3 {
+      color: var(--err);
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+    .confirm-box p {
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .confirm-box .request-name {
+      color: var(--accent);
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .confirm-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .confirm-actions button {
+      padding: 8px 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.15s;
+    }
+    .confirm-actions button:hover { opacity: 0.85; }
+    .confirm-actions .btn-danger {
+      background: var(--err);
+      border-color: var(--err);
+      color: #fff;
+    }
+    .confirm-actions .btn-cancel {
+      background: var(--panel2);
+      border-color: var(--border);
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -635,6 +712,18 @@
   </div>
 </div>
 
+<!-- Custom Confirm Dialog -->
+<div class="confirm-overlay" id="confirmDialog">
+  <div class="confirm-box">
+    <h3>⚠️ Delete Request</h3>
+    <p>Are you sure you want to delete "<span class="request-name" id="confirmRequestName"></span>"?<br>This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="confirmCancel">Cancel</button>
+      <button class="btn-danger" id="confirmDelete">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script>
   (function() {
     // ----- THEME -----
@@ -710,6 +799,9 @@
     const copyBtn = $('copyRespBtn');
     const exportModal = $('exportModal');
     const exportText = $('exportText');
+    const confirmDialog = $('confirmDialog');
+    const confirmRequestName = $('confirmRequestName');
+    let pendingDeleteIndex = -1;
 
     // ----- helpers -----
     function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
@@ -900,7 +992,7 @@
       lastResponseHeaders = [];
     }
 
-    // ----- History render with rename -----
+    // ----- History render with rename + delete -----
     function renderHistory() {
       historyEl.innerHTML = '';
       requests.forEach((r, idx) => {
@@ -912,6 +1004,9 @@
         const urlSpan = document.createElement('span');
         urlSpan.className = 'hist-url';
         urlSpan.textContent = r.name || r.url || '(no url)';
+
+        const actions = document.createElement('span');
+        actions.className = 'hist-actions';
 
         const renameBtn = document.createElement('button');
         renameBtn.className = 'hist-rename';
@@ -932,9 +1027,24 @@
           }
         };
 
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'hist-delete';
+        deleteBtn.textContent = '🗑';
+        deleteBtn.title = 'Delete request';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          // Show confirmation dialog
+          pendingDeleteIndex = idx;
+          confirmRequestName.textContent = r.name || r.url || 'Untitled';
+          confirmDialog.classList.add('open');
+        };
+
+        actions.appendChild(renameBtn);
+        actions.appendChild(deleteBtn);
+
         div.appendChild(methodSpan);
         div.appendChild(urlSpan);
-        div.appendChild(renameBtn);
+        div.appendChild(actions);
 
         div.onclick = () => {
           activeIndex = idx;
@@ -950,6 +1060,53 @@
         historyEl.appendChild(div);
       });
     }
+
+    // ----- Confirm dialog handlers -----
+    function closeConfirm() {
+      confirmDialog.classList.remove('open');
+      pendingDeleteIndex = -1;
+    }
+
+    document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
+    document.getElementById('confirmDelete').addEventListener('click', () => {
+      if (pendingDeleteIndex >= 0 && pendingDeleteIndex < requests.length) {
+        const deletedName = requests[pendingDeleteIndex].name || 'Untitled';
+        requests.splice(pendingDeleteIndex, 1);
+        saveToStorage();
+        
+        // Adjust active index
+        if (requests.length === 0) {
+          // No requests left, create a blank one
+          const blank = blankRequest('Untitled');
+          requests.push(blank);
+          activeIndex = 0;
+          current = blank;
+        } else if (pendingDeleteIndex === activeIndex) {
+          // Deleted the active one, select the first
+          activeIndex = 0;
+          current = JSON.parse(JSON.stringify(requests[0]));
+        } else if (pendingDeleteIndex < activeIndex) {
+          activeIndex--;
+        }
+        loadCurrentIntoForm();
+        renderHistory();
+        closeConfirm();
+      } else {
+        closeConfirm();
+      }
+    });
+
+    // Close confirm on overlay click
+    confirmDialog.addEventListener('click', (e) => {
+      if (e.target === confirmDialog) closeConfirm();
+    });
+
+    // Escape key to close confirm
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && confirmDialog.classList.contains('open')) {
+        closeConfirm();
+      }
+    });
 
     // ----- Save -----
     $('saveBtn').onclick = () => {
@@ -1123,7 +1280,6 @@
 
     // ----- EXPORT: AI-friendly JSON -----
     function generateAIExport() {
-      // Create a clean copy with only what an AI needs
       const exportData = {
         exportedAt: new Date().toISOString(),
         totalRequests: requests.length,
@@ -1198,7 +1354,6 @@
       URL.revokeObjectURL(url);
     });
 
-    // Close export modal with Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && exportModal.classList.contains('open')) {
         closeExportModal();
