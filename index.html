@@ -2,1382 +2,1860 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Tester · delete + confirm</title>
-  <style>
-    /* ----- theme variables (default dark) ----- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    :root {
-      --bg: #0f1117;
-      --panel: #161924;
-      --panel2: #1d2230;
-      --border: #2a3041;
-      --text: #e6e8ee;
-      --muted: #8a8fa3;
-      --accent: #5b8cff;
-      --accent2: #3ddc97;
-      --warn: #ffb454;
-      --err: #ff5c6c;
-      --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-      --shadow: 0 2px 8px rgba(0,0,0,0.4);
-      --input-bg: #1d2230;
-      --input-border: #2a3041;
-      --badge-bg: #5b8cff;
-      --badge-text: #fff;
-      --copy-bg: #1d2230;
-      --copy-border: #2a3041;
-      --hover-bg: #1d2230;
-      --active-outline: #5b8cff;
-    }
-    /* light theme */
-    [data-theme="light"] {
-      --bg: #f0f2f8;
-      --panel: #ffffff;
-      --panel2: #e9ecf3;
-      --border: #c6cdde;
-      --text: #1e2330;
-      --muted: #5a627a;
-      --accent: #3b6eff;
-      --accent2: #1ea87a;
-      --warn: #b8860b;
-      --err: #d13a4a;
-      --shadow: 0 2px 8px rgba(0,0,0,0.08);
-      --input-bg: #ffffff;
-      --input-border: #c6cdde;
-      --badge-bg: #3b6eff;
-      --badge-text: #ffffff;
-      --copy-bg: #e9ecf3;
-      --copy-border: #c6cdde;
-      --hover-bg: #e9ecf3;
-      --active-outline: #3b6eff;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Tester · Collections + Import/Export</title>
+    <style>
+        /* ----- theme variables (default dark) ----- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #0f1117;
+            --panel: #161924;
+            --panel2: #1d2230;
+            --border: #2a3041;
+            --text: #e6e8ee;
+            --muted: #8a8fa3;
+            --accent: #5b8cff;
+            --accent2: #3ddc97;
+            --warn: #ffb454;
+            --err: #ff5c6c;
+            --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --shadow: 0 2px 8px rgba(0,0,0,0.4);
+            --input-bg: #1d2230;
+            --input-border: #2a3041;
+            --badge-bg: #5b8cff;
+            --badge-text: #fff;
+            --copy-bg: #1d2230;
+            --copy-border: #2a3041;
+            --hover-bg: #1d2230;
+            --active-outline: #5b8cff;
+            --collection-color: #5b8cff;
+        }
+        /* light theme */
+        [data-theme="light"] {
+            --bg: #f0f2f8;
+            --panel: #ffffff;
+            --panel2: #e9ecf3;
+            --border: #c6cdde;
+            --text: #1e2330;
+            --muted: #5a627a;
+            --accent: #3b6eff;
+            --accent2: #1ea87a;
+            --warn: #b8860b;
+            --err: #d13a4a;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --input-bg: #ffffff;
+            --input-border: #c6cdde;
+            --badge-bg: #3b6eff;
+            --badge-text: #ffffff;
+            --copy-bg: #e9ecf3;
+            --copy-border: #c6cdde;
+            --hover-bg: #e9ecf3;
+            --active-outline: #3b6eff;
+            --collection-color: #3b6eff;
+        }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, Segoe UI, Arial, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      margin: 0;
-      transition: background 0.2s, color 0.2s;
-    }
-    #app {
-      display: flex;
-      height: 100vh;
-    }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+        #app {
+            display: flex;
+            height: 100vh;
+        }
 
-    /* sidebar */
-    #sidebar {
-      width: 260px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #sidebar h1 {
-      font-size: 14px;
-      padding: 14px;
-      margin: 0;
-      border-bottom: 1px solid var(--border);
-      color: var(--accent);
-      letter-spacing: 0.3px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      transition: border-color 0.2s;
-    }
-    #headerActions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    #themeToggle, #exportBtn {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 20px;
-      padding: 3px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: 0.15s;
-    }
-    #themeToggle:hover, #exportBtn:hover {
-      background: var(--border);
-    }
-    #exportBtn {
-      border-radius: 6px;
-      font-weight: 600;
-      padding: 3px 10px;
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-    #exportBtn:hover {
-      opacity: 0.85;
-    }
-    #newReqBtn {
-      margin: 10px 10px 6px 10px;
-      padding: 8px;
-      background: var(--accent);
-      border: none;
-      color: #fff;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 13px;
-      transition: 0.1s;
-    }
-    #newReqBtn:hover { opacity: 0.85; }
-    #history {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px 8px;
-    }
-    .hist-item {
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 3px;
-      transition: background 0.1s;
-      position: relative;
-    }
-    .hist-item:hover { background: var(--hover-bg); }
-    .hist-item.active {
-      background: var(--hover-bg);
-      outline: 1px solid var(--active-outline);
-    }
-    .hist-method {
-      font-weight: 700;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      min-width: 44px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .m-GET { background: #1c3a2e; color: #3ddc97; }
-    .m-POST { background: #3a2f1c; color: #ffb454; }
-    .m-PUT { background: #1c2c3a; color: #5b8cff; }
-    .m-PATCH { background: #2c1c3a; color: #c08cff; }
-    .m-DELETE { background: #3a1c1c; color: #ff5c6c; }
+        /* sidebar */
+        #sidebar {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #sidebar h1 {
+            font-size: 14px;
+            padding: 14px;
+            margin: 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent);
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: border-color 0.2s;
+        }
+        #headerActions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        #themeToggle, #exportBtn, #importBtn {
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 20px;
+            padding: 3px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        #themeToggle:hover, #exportBtn:hover, #importBtn:hover {
+            background: var(--border);
+        }
+        #exportBtn, #importBtn {
+            border-radius: 6px;
+            font-weight: 600;
+            padding: 3px 10px;
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        #exportBtn:hover, #importBtn:hover {
+            opacity: 0.85;
+        }
+        #newReqBtn, #newCollectionBtn {
+            margin: 6px 10px;
+            padding: 8px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.1s;
+        }
+        #newReqBtn:hover, #newCollectionBtn:hover { opacity: 0.85; }
+        #newCollectionBtn {
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 12px;
+            padding: 6px;
+        }
+        #history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+        }
+        .collection-header {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            margin-top: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--collection-color);
+            transition: 0.1s;
+            gap: 6px;
+        }
+        .collection-header:hover {
+            background: var(--hover-bg);
+        }
+        .collection-header .collapse-icon {
+            font-size: 10px;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .collection-header .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        .collection-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 4px;
+        }
+        .collection-actions button {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: 0.1s;
+        }
+        .collection-actions button:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .collection-actions .del-col:hover {
+            background: var(--err);
+            color: #fff;
+        }
+        .collection-items {
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+            margin-left: 6px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .collection-items.collapsed {
+            max-height: 0 !important;
+            padding: 0;
+            margin: 0;
+            border-left: none;
+        }
+        .hist-item {
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 2px;
+            transition: background 0.1s;
+            position: relative;
+        }
+        .hist-item:hover { background: var(--hover-bg); }
+        .hist-item.active {
+            background: var(--hover-bg);
+            outline: 1px solid var(--active-outline);
+        }
+        .hist-method {
+            font-weight: 700;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 44px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .m-GET { background: #1c3a2e; color: #3ddc97; }
+        .m-POST { background: #3a2f1c; color: #ffb454; }
+        .m-PUT { background: #1c2c3a; color: #5b8cff; }
+        .m-PATCH { background: #2c1c3a; color: #c08cff; }
+        .m-DELETE { background: #3a1c1c; color: #ff5c6c; }
 
-    .hist-url {
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-    }
-    .hist-actions {
-      display: flex;
-      gap: 2px;
-      flex-shrink: 0;
-    }
-    .hist-rename, .hist-delete {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      font-size: 12px;
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 4px;
-      transition: 0.1s;
-    }
-    .hist-rename:hover {
-      background: var(--border);
-      color: var(--text);
-    }
-    .hist-delete:hover {
-      background: var(--err);
-      color: #fff;
-    }
+        .hist-url {
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        .hist-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .hist-rename, .hist-delete, .hist-move {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: 0.1s;
+        }
+        .hist-rename:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+        .hist-delete:hover {
+            background: var(--err);
+            color: #fff;
+        }
+        .hist-move:hover {
+            background: var(--accent);
+            color: #fff;
+        }
 
-    /* main */
-    #main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-    #bar {
-      display: flex;
-      gap: 8px;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      flex-wrap: wrap;
-      align-items: center;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #method {
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 6px;
-      padding: 8px;
-      font-weight: 700;
-      font-size: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #url {
-      flex: 1;
-      min-width: 180px;
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-family: var(--mono);
-      font-size: 13px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #sendBtn {
-      background: var(--accent2);
-      color: #06251a;
-      border: none;
-      padding: 8px 22px;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 13px;
-    }
-    #sendBtn:disabled { opacity: 0.6; cursor: default; }
-    #saveBtn {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #saveBtn:hover { background: var(--border); }
+        /* main */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        #bar {
+            display: flex;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel);
+            flex-wrap: wrap;
+            align-items: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #method {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            padding: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #url {
+            flex: 1;
+            min-width: 180px;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-family: var(--mono);
+            font-size: 13px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #sendBtn {
+            background: var(--accent2);
+            color: #06251a;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #sendBtn:disabled { opacity: 0.6; cursor: default; }
+        #saveBtn {
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #saveBtn:hover { background: var(--border); }
 
-    #tabs {
-      display: flex;
-      gap: 2px;
-      padding: 0 12px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .tab {
-      padding: 9px 14px;
-      cursor: pointer;
-      font-size: 12px;
-      color: var(--muted);
-      border-bottom: 2px solid transparent;
-      transition: 0.1s;
-    }
-    .tab.active {
-      color: var(--text);
-      border-color: var(--accent);
-    }
-    .badge {
-      background: var(--badge-bg);
-      color: var(--badge-text);
-      border-radius: 8px;
-      font-size: 10px;
-      padding: 1px 6px;
-      margin-left: 5px;
-    }
+        #tabs {
+            display: flex;
+            gap: 2px;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel);
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .tab {
+            padding: 9px 14px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--muted);
+            border-bottom: 2px solid transparent;
+            transition: 0.1s;
+        }
+        .tab.active {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        .badge {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            border-radius: 8px;
+            font-size: 10px;
+            padding: 1px 6px;
+            margin-left: 5px;
+        }
 
-    #panes {
-      flex: 1;
-      overflow: auto;
-      padding: 14px;
-      background: var(--bg);
-      transition: background 0.2s;
-    }
-    .pane { display: none; }
-    .pane.active { display: block; }
+        #panes {
+            flex: 1;
+            overflow: auto;
+            padding: 14px;
+            background: var(--bg);
+            transition: background 0.2s;
+        }
+        .pane { display: none; }
+        .pane.active { display: block; }
 
-    table.kv {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    table.kv td { padding: 4px; }
-    table.kv input[type="text"] {
-      width: 100%;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--text);
-      border-radius: 5px;
-      padding: 6px 8px;
-      font-family: var(--mono);
-      font-size: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    table.kv input[type="checkbox"] {
-      transform: scale(1.1);
-      accent-color: var(--accent);
-    }
-    .rowBtn {
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .rowBtn:hover { color: var(--err); }
-    #addHeaderBtn, #addParamBtn {
-      margin-top: 6px;
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 5px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #addHeaderBtn:hover, #addParamBtn:hover {
-      background: var(--border);
-    }
+        table.kv {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.kv td { padding: 4px; }
+        table.kv input[type="text"] {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text);
+            border-radius: 5px;
+            padding: 6px 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        table.kv input[type="checkbox"] {
+            transform: scale(1.1);
+            accent-color: var(--accent);
+        }
+        .rowBtn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .rowBtn:hover { color: var(--err); }
+        #addHeaderBtn, #addParamBtn {
+            margin-top: 6px;
+            background: var(--panel2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #addHeaderBtn:hover, #addParamBtn:hover {
+            background: var(--border);
+        }
 
-    #bodyTypeSel {
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 5px;
-      padding: 5px;
-      font-size: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    textarea#bodyText {
-      width: 100%;
-      height: 200px;
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 6px;
-      padding: 10px;
-      font-family: var(--mono);
-      font-size: 12.5px;
-      resize: vertical;
-      margin-top: 6px;
-      transition: background 0.2s, border-color 0.2s;
-    }
+        #bodyTypeSel {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            padding: 5px;
+            font-size: 12px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        textarea#bodyText {
+            width: 100%;
+            height: 200px;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            resize: vertical;
+            margin-top: 6px;
+            transition: background 0.2s, border-color 0.2s;
+        }
 
-    #authType {
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 5px;
-      padding: 6px;
-      margin-bottom: 10px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .auth-field { margin-bottom: 8px; }
-    .auth-field label {
-      display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 3px;
-    }
-    .auth-field input {
-      width: 100%;
-      max-width: 380px;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--text);
-      border-radius: 5px;
-      padding: 7px 9px;
-      font-family: var(--mono);
-      font-size: 12px;
-      transition: background 0.2s, border-color 0.2s;
-    }
+        #authType {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 5px;
+            padding: 6px;
+            margin-bottom: 10px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .auth-field { margin-bottom: 8px; }
+        .auth-field label {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 3px;
+        }
+        .auth-field input {
+            width: 100%;
+            max-width: 380px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text);
+            border-radius: 5px;
+            padding: 7px 9px;
+            font-family: var(--mono);
+            font-size: 12px;
+            transition: background 0.2s, border-color 0.2s;
+        }
 
-    /* response */
-    #responseWrap {
-      border-top: 1px solid var(--border);
-      height: 42%;
-      display: flex;
-      flex-direction: column;
-      background: var(--panel);
-      min-height: 140px;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #respHeader {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 6px 14px;
-      border-bottom: 1px solid var(--border);
-      font-size: 12px;
-      flex-wrap: wrap;
-      transition: border-color 0.2s;
-    }
-    #statusPill {
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 5px;
-      display: none;
-    }
-    .s2 { background: #1c3a2e; color: #3ddc97; }
-    .s3 { background: #2c2c1c; color: #ffe17a; }
-    .s4 { background: #3a2f1c; color: #ffb454; }
-    .s5 { background: #3a1c1c; color: #ff5c6c; }
+        /* response */
+        #responseWrap {
+            border-top: 1px solid var(--border);
+            height: 42%;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel);
+            min-height: 140px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        #respHeader {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 6px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            flex-wrap: wrap;
+            transition: border-color 0.2s;
+        }
+        #statusPill {
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .s2 { background: #1c3a2e; color: #3ddc97; }
+        .s3 { background: #2c2c1c; color: #ffe17a; }
+        .s4 { background: #3a2f1c; color: #ffb454; }
+        .s5 { background: #3a1c1c; color: #ff5c6c; }
 
-    #respTabs {
-      display: flex;
-      gap: 14px;
-    }
-    #respTabs span {
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 4px 0;
-      border-bottom: 2px solid transparent;
-    }
-    #respTabs span.active {
-      color: var(--text);
-      border-color: var(--accent);
-    }
-    #respBody {
-      flex: 1;
-      overflow: auto;
-      padding: 12px 14px;
-      font-family: var(--mono);
-      font-size: 12.5px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    #respPlaceholder {
-      color: var(--muted);
-      padding: 20px 0;
-      text-align: center;
-      font-size: 13px;
-    }
-    .json-key { color: #7fb9ff; }
-    .json-str { color: #3ddc97; }
-    .json-num { color: #ffb454; }
-    .json-bool { color: #c08cff; }
-    .json-null { color: #ff5c6c; }
+        #respTabs {
+            display: flex;
+            gap: 14px;
+        }
+        #respTabs span {
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 2px solid transparent;
+        }
+        #respTabs span.active {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        #respBody {
+            flex: 1;
+            overflow: auto;
+            padding: 12px 14px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        #respPlaceholder {
+            color: var(--muted);
+            padding: 20px 0;
+            text-align: center;
+            font-size: 13px;
+        }
+        .json-key { color: #7fb9ff; }
+        .json-str { color: #3ddc97; }
+        .json-num { color: #ffb454; }
+        .json-bool { color: #c08cff; }
+        .json-null { color: #ff5c6c; }
 
-    .muted { color: var(--muted); }
-    .smallnote {
-      font-size: 11px;
-      color: var(--muted);
-      margin: 6px 0 10px;
-    }
-    .copyBtn {
-      background: var(--copy-bg);
-      border: 1px solid var(--copy-border);
-      color: var(--muted);
-      font-size: 11px;
-      padding: 3px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-left: auto;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .copyBtn:hover {
-      background: var(--border);
-      color: var(--text);
-    }
+        .muted { color: var(--muted); }
+        .smallnote {
+            font-size: 11px;
+            color: var(--muted);
+            margin: 6px 0 10px;
+        }
+        .copyBtn {
+            background: var(--copy-bg);
+            border: 1px solid var(--copy-border);
+            color: var(--muted);
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: auto;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .copyBtn:hover {
+            background: var(--border);
+            color: var(--text);
+        }
 
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
 
-    /* export modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      z-index: 999;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      max-width: 700px;
-      width: 90%;
-      max-height: 80vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: var(--shadow);
-    }
-    .modal-box h2 {
-      color: var(--accent);
-      margin-bottom: 8px;
-      font-size: 18px;
-    }
-    .modal-box p {
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-    .modal-box textarea {
-      flex: 1;
-      background: var(--input-bg);
-      color: var(--text);
-      border: 1px solid var(--input-border);
-      border-radius: 6px;
-      padding: 12px;
-      font-family: var(--mono);
-      font-size: 12px;
-      min-height: 200px;
-      resize: vertical;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-      justify-content: flex-end;
-    }
-    .modal-actions button {
-      padding: 8px 18px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 13px;
-      transition: 0.15s;
-    }
-    .modal-actions button.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    .modal-actions button:hover {
-      opacity: 0.85;
-    }
+        /* modals */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+        }
+        .modal-box h2 {
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .modal-box p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .modal-box textarea {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: var(--mono);
+            font-size: 12px;
+            min-height: 200px;
+            resize: vertical;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            padding: 8px 18px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--panel2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.15s;
+        }
+        .modal-actions button.primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .modal-actions button:hover {
+            opacity: 0.85;
+        }
 
-    /* confirm dialog (custom) */
-    .confirm-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(3px);
-    }
-    .confirm-overlay.open { display: flex; }
-    .confirm-box {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 28px 32px;
-      max-width: 420px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-      text-align: center;
-    }
-    .confirm-box h3 {
-      color: var(--err);
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    .confirm-box p {
-      color: var(--text);
-      font-size: 14px;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-    .confirm-box .request-name {
-      color: var(--accent);
-      font-weight: 600;
-      word-break: break-word;
-    }
-    .confirm-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-    .confirm-actions button {
-      padding: 8px 28px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--panel2);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: 0.15s;
-    }
-    .confirm-actions button:hover { opacity: 0.85; }
-    .confirm-actions .btn-danger {
-      background: var(--err);
-      border-color: var(--err);
-      color: #fff;
-    }
-    .confirm-actions .btn-cancel {
-      background: var(--panel2);
-      border-color: var(--border);
-      color: var(--text);
-    }
-  </style>
+        /* confirm dialog */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-box {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+        .confirm-box h3 {
+            color: var(--err);
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .confirm-box p {
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .confirm-box .highlight {
+            color: var(--accent);
+            font-weight: 600;
+            word-break: break-word;
+        }
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .confirm-actions button {
+            padding: 8px 28px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--panel2);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+        .confirm-actions button:hover { opacity: 0.85; }
+        .confirm-actions .btn-danger {
+            background: var(--err);
+            border-color: var(--err);
+            color: #fff;
+        }
+        .confirm-actions .btn-cancel {
+            background: var(--panel2);
+            border-color: var(--border);
+            color: var(--text);
+        }
+        .confirm-actions .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
 <div id="app">
-  <div id="sidebar">
-    <h1>
-      <span>⚡</span> API TESTER
-      <span id="headerActions">
-        <button id="exportBtn" title="Export all requests as AI-friendly JSON">🤖 Export</button>
-        <button id="themeToggle" title="Toggle light/dark">🌓</button>
-      </span>
-    </h1>
-    <button id="newReqBtn">＋ New Request</button>
-    <div id="history"></div>
-  </div>
-
-  <div id="main">
-    <div id="bar">
-      <select id="method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option></select>
-      <input id="url" type="text" placeholder="https://api.example.com/v1/resource" />
-      <button id="sendBtn">Send</button>
-      <button id="saveBtn">Save</button>
+    <div id="sidebar">
+        <h1>
+            <span>⚡</span> API TESTER
+            <span id="headerActions">
+                <button id="importBtn" title="Import collections">📥 Import</button>
+                <button id="exportBtn" title="Export all collections">📤 Export</button>
+                <button id="themeToggle" title="Toggle light/dark">🌓</button>
+            </span>
+        </h1>
+        <button id="newCollectionBtn">＋ New Collection</button>
+        <button id="newReqBtn">＋ New Request</button>
+        <div id="history"></div>
     </div>
 
-    <div id="tabs">
-      <div class="tab active" data-tab="params">Params <span class="badge" id="paramCount" style="display:none"></span></div>
-      <div class="tab" data-tab="headers">Headers <span class="badge" id="headerCount" style="display:none"></span></div>
-      <div class="tab" data-tab="auth">Auth</div>
-      <div class="tab" data-tab="body">Body</div>
-    </div>
-
-    <div id="panes">
-      <div class="pane active" id="pane-params">
-        <table class="kv" id="paramsTable"></table>
-        <button id="addParamBtn">+ Add Param</button>
-        <div class="smallnote">Params are appended to the URL automatically.</div>
-      </div>
-      <div class="pane" id="pane-headers">
-        <table class="kv" id="headersTable"></table>
-        <button id="addHeaderBtn">+ Add Header</button>
-      </div>
-      <div class="pane" id="pane-auth">
-        <select id="authType"><option value="none">No Auth</option><option value="bearer">Bearer Token</option><option value="basic">Basic Auth</option><option value="apikey">API Key (header)</option></select>
-        <div id="authFields"></div>
-      </div>
-      <div class="pane" id="pane-body">
-        <select id="bodyTypeSel"><option value="none">none</option><option value="json" selected>JSON</option><option value="text">raw text</option><option value="form">x-www-form-urlencoded</option></select>
-        <textarea id="bodyText" placeholder='{\n  "key": "value"\n}'></textarea>
-        <div class="smallnote" id="bodyHint"></div>
-      </div>
-    </div>
-
-    <div id="responseWrap">
-      <div id="respHeader">
-        <span id="statusPill"></span>
-        <span id="respTime" class="muted"></span>
-        <span id="respSize" class="muted"></span>
-        <div id="respTabs">
-          <span class="active" data-rt="body">Body</span>
-          <span data-rt="headers">Headers</span>
+    <div id="main">
+        <div id="bar">
+            <select id="method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option></select>
+            <input id="url" type="text" placeholder="https://api.example.com/v1/resource" />
+            <button id="sendBtn">Send</button>
+            <button id="saveBtn">Save</button>
         </div>
-        <button class="copyBtn" id="copyRespBtn">Copy</button>
-      </div>
-      <div id="respBody"><div id="respPlaceholder">Send a request to see the response here.</div></div>
+
+        <div id="tabs">
+            <div class="tab active" data-tab="params">Params <span class="badge" id="paramCount" style="display:none"></span></div>
+            <div class="tab" data-tab="headers">Headers <span class="badge" id="headerCount" style="display:none"></span></div>
+            <div class="tab" data-tab="auth">Auth</div>
+            <div class="tab" data-tab="body">Body</div>
+        </div>
+
+        <div id="panes">
+            <div class="pane active" id="pane-params">
+                <table class="kv" id="paramsTable"></table>
+                <button id="addParamBtn">+ Add Param</button>
+                <div class="smallnote">Params are appended to the URL automatically.</div>
+            </div>
+            <div class="pane" id="pane-headers">
+                <table class="kv" id="headersTable"></table>
+                <button id="addHeaderBtn">+ Add Header</button>
+            </div>
+            <div class="pane" id="pane-auth">
+                <select id="authType"><option value="none">No Auth</option><option value="bearer">Bearer Token</option><option value="basic">Basic Auth</option><option value="apikey">API Key (header)</option></select>
+                <div id="authFields"></div>
+            </div>
+            <div class="pane" id="pane-body">
+                <select id="bodyTypeSel"><option value="none">none</option><option value="json" selected>JSON</option><option value="text">raw text</option><option value="form">x-www-form-urlencoded</option></select>
+                <textarea id="bodyText" placeholder='{\n  "key": "value"\n}'></textarea>
+                <div class="smallnote" id="bodyHint"></div>
+            </div>
+        </div>
+
+        <div id="responseWrap">
+            <div id="respHeader">
+                <span id="statusPill"></span>
+                <span id="respTime" class="muted"></span>
+                <span id="respSize" class="muted"></span>
+                <div id="respTabs">
+                    <span class="active" data-rt="body">Body</span>
+                    <span data-rt="headers">Headers</span>
+                </div>
+                <button class="copyBtn" id="copyRespBtn">Copy</button>
+            </div>
+            <div id="respBody"><div id="respPlaceholder">Send a request to see the response here.</div></div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Export Modal -->
 <div class="modal-overlay" id="exportModal">
-  <div class="modal-box">
-    <h2>🤖 AI-Friendly Export</h2>
-    <p>This JSON export describes all your saved requests with their configurations and saved responses. An AI can use this to understand your API usage patterns, generate tests, or document endpoints.</p>
-    <textarea id="exportText" readonly></textarea>
-    <div class="modal-actions">
-      <button id="copyExportBtn">📋 Copy</button>
-      <button id="closeExportBtn">Close</button>
-      <button class="primary" id="downloadExportBtn">⬇ Download</button>
+    <div class="modal-box">
+        <h2>📤 Export Collections</h2>
+        <p>This JSON export contains all your collections and their requests with configurations and responses.</p>
+        <textarea id="exportText" readonly></textarea>
+        <div class="modal-actions">
+            <button id="copyExportBtn">📋 Copy</button>
+            <button id="closeExportBtn">Close</button>
+            <button class="primary" id="downloadExportBtn">⬇ Download</button>
+        </div>
     </div>
-  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+    <div class="modal-box">
+        <h2>📥 Import Collections</h2>
+        <p>Paste your exported JSON data below. You can choose to import all collections or select specific ones.</p>
+        <textarea id="importText" placeholder='Paste your JSON data here...'></textarea>
+        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <label style="font-size: 13px; color: var(--muted);">
+                <input type="checkbox" id="importAllCheck" checked> Import all collections
+            </label>
+            <span style="font-size: 12px; color: var(--muted);" id="importStatus"></span>
+        </div>
+        <div class="modal-actions">
+            <button id="closeImportBtn">Cancel</button>
+            <button class="primary" id="confirmImportBtn">Import</button>
+        </div>
+    </div>
 </div>
 
 <!-- Custom Confirm Dialog -->
 <div class="confirm-overlay" id="confirmDialog">
-  <div class="confirm-box">
-    <h3>⚠️ Delete Request</h3>
-    <p>Are you sure you want to delete "<span class="request-name" id="confirmRequestName"></span>"?<br>This action cannot be undone.</p>
-    <div class="confirm-actions">
-      <button class="btn-cancel" id="confirmCancel">Cancel</button>
-      <button class="btn-danger" id="confirmDelete">Delete</button>
+    <div class="confirm-box">
+        <h3 id="confirmTitle">⚠️ Confirm</h3>
+        <p id="confirmMessage">Are you sure?</p>
+        <div class="confirm-actions" id="confirmActions">
+            <button class="btn-cancel" id="confirmCancel">Cancel</button>
+            <button class="btn-danger" id="confirmOk">Confirm</button>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-  (function() {
-    // ----- THEME -----
-    function setTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('apiTesterTheme', theme);
-    }
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme') || 'dark';
-      setTheme(current === 'dark' ? 'light' : 'dark');
-    }
-    const savedTheme = localStorage.getItem('apiTesterTheme') || 'dark';
-    setTheme(savedTheme);
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-
-    // ----- STATE -----
-    const STORAGE_KEY = 'apiTesterRequests';
-    let requests = [];
-    let activeIndex = -1;
-    let lastResponseRaw = '';
-    let lastResponseHeaders = [];
-    let currentRespTab = 'body';
-
-    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-
-    function blankRequest(name = '') {
-      return {
-        id: uid(),
-        name: name || 'Untitled',
-        method: 'GET',
-        url: '',
-        params: [{ k: '', v: '', on: true }],
-        headers: [{ k: '', v: '', on: true }],
-        auth: { type: 'none', token: '', user: '', pass: '', key: '', value: '' },
-        bodyType: 'json',
-        body: '',
-        response: null
-      };
-    }
-
-    let current = blankRequest();
-
-    // ----- persist to localStorage -----
-    function saveToStorage() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(requests)); } catch (_) {}
-    }
-
-    function loadFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length) {
-            requests = parsed;
-            requests.forEach(r => { if (!r.id) r.id = uid(); });
-            return true;
-          }
+    (function() {
+        // ----- THEME -----
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('apiTesterTheme', theme);
         }
-      } catch (_) {}
-      return false;
-    }
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        }
+        const savedTheme = localStorage.getItem('apiTesterTheme') || 'dark';
+        setTheme(savedTheme);
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-    // ----- DOM refs -----
-    const $ = id => document.getElementById(id);
-    const methodSel = $('method'), urlInput = $('url');
-    const paramsTable = $('paramsTable'), headersTable = $('headersTable');
-    const bodyTypeSel = $('bodyTypeSel'), bodyText = $('bodyText'), bodyHint = $('bodyHint');
-    const authType = $('authType'), authFields = $('authFields');
-    const historyEl = $('history');
-    const statusPill = $('statusPill');
-    const respTime = $('respTime'), respSize = $('respSize');
-    const respBody = $('respBody');
-    const copyBtn = $('copyRespBtn');
-    const exportModal = $('exportModal');
-    const exportText = $('exportText');
-    const confirmDialog = $('confirmDialog');
-    const confirmRequestName = $('confirmRequestName');
-    let pendingDeleteIndex = -1;
+        // ----- STATE -----
+        const STORAGE_KEY = 'apiTesterCollections';
+        let collections = []; // [{ id, name, requests: [] }]
+        let activeCollectionId = null;
+        let activeRequestId = null;
+        let lastResponseRaw = '';
+        let lastResponseHeaders = [];
+        let currentRespTab = 'body';
+        let currentRequest = null;
 
-    // ----- helpers -----
-    function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
-    function escapeHtml(s) { return (s + '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-    function formatBytes(n) { if (n < 1024) return n + ' B'; if (n < 1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
+        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
-    // ----- Tabs -----
-    document.querySelectorAll('.tab').forEach(t => {
-      t.onclick = () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-        document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
-        t.classList.add('active');
-        $('pane-' + t.dataset.tab).classList.add('active');
-      };
-    });
-    document.querySelectorAll('#respTabs span').forEach(s => {
-      s.onclick = () => {
-        document.querySelectorAll('#respTabs span').forEach(x => x.classList.remove('active'));
-        s.classList.add('active');
-        currentRespTab = s.dataset.rt;
-        renderResponseBody();
-      };
-    });
+        function blankRequest(name = '') {
+            return {
+                id: uid(),
+                name: name || 'Untitled',
+                method: 'GET',
+                url: '',
+                params: [{ k: '', v: '', on: true }],
+                headers: [{ k: '', v: '', on: true }],
+                auth: { type: 'none', token: '', user: '', pass: '', key: '', value: '' },
+                bodyType: 'json',
+                body: '',
+                response: null
+            };
+        }
 
-    // ----- KV table render -----
-    function renderKVTable(table, list, onChange) {
-      table.innerHTML = '';
-      list.forEach((row, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="width:26px"><input type="checkbox" ${row.on ? 'checked' : ''}></td>
-          <td><input type="text" placeholder="key" value="${escapeAttr(row.k)}"></td>
-          <td><input type="text" placeholder="value" value="${escapeAttr(row.v)}"></td>
-          <td style="width:26px"><button class="rowBtn">✕</button></td>
-        `;
-        const [chk, kIn, vIn] = tr.querySelectorAll('input');
-        const del = tr.querySelector('button');
-        chk.onchange = () => { row.on = chk.checked; onChange(); };
-        kIn.oninput = () => { row.k = kIn.value; onChange(); };
-        vIn.oninput = () => { row.v = vIn.value; onChange(); };
-        del.onclick = () => { list.splice(i, 1); renderKVTable(table, list, onChange); onChange(); };
-        table.appendChild(tr);
-      });
-    }
+        function blankCollection(name = '') {
+            return {
+                id: uid(),
+                name: name || 'New Collection',
+                requests: []
+            };
+        }
 
-    function ensureTrailingEmpty(list) {
-      if (list.length === 0 || list[list.length - 1].k !== '' || list[list.length - 1].v !== '') {
-        list.push({ k: '', v: '', on: true });
-      }
-    }
+        // ----- persist to localStorage -----
+        function saveToStorage() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collections)); } catch (_) {}
+        }
 
-    function renderParams() {
-      ensureTrailingEmpty(current.params);
-      renderKVTable(paramsTable, current.params, () => {
-        syncUrlFromParams();
-        ensureTrailingEmpty(current.params);
-        updateBadges();
-      });
-      updateBadges();
-    }
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length) {
+                        collections = parsed;
+                        collections.forEach(c => {
+                            if (!c.id) c.id = uid();
+                            c.requests.forEach(r => { if (!r.id) r.id = uid(); });
+                        });
+                        return true;
+                    }
+                }
+            } catch (_) {}
+            return false;
+        }
 
-    function renderHeaders() {
-      ensureTrailingEmpty(current.headers);
-      renderKVTable(headersTable, current.headers, () => {
-        ensureTrailingEmpty(current.headers);
-        updateBadges();
-      });
-      updateBadges();
-    }
+        // ----- DOM refs -----
+        const $ = id => document.getElementById(id);
+        const methodSel = $('method'), urlInput = $('url');
+        const paramsTable = $('paramsTable'), headersTable = $('headersTable');
+        const bodyTypeSel = $('bodyTypeSel'), bodyText = $('bodyText'), bodyHint = $('bodyHint');
+        const authType = $('authType'), authFields = $('authFields');
+        const historyEl = $('history');
+        const statusPill = $('statusPill');
+        const respTime = $('respTime'), respSize = $('respSize');
+        const respBody = $('respBody');
+        const copyBtn = $('copyRespBtn');
+        const exportModal = $('exportModal');
+        const exportText = $('exportText');
+        const importModal = $('importModal');
+        const importText = $('importText');
+        const importAllCheck = $('importAllCheck');
+        const importStatus = $('importStatus');
+        const confirmDialog = $('confirmDialog');
+        const confirmTitle = $('confirmTitle');
+        const confirmMessage = $('confirmMessage');
+        const confirmOk = $('confirmOk');
+        const confirmCancel = $('confirmCancel');
+        let confirmCallback = null;
 
-    function updateBadges() {
-      const pc = current.params.filter(p => p.on && p.k).length;
-      const hc = current.headers.filter(h => h.on && h.k).length;
-      const pcEl = $('paramCount'), hcEl = $('headerCount');
-      pcEl.style.display = pc ? '' : 'none'; pcEl.textContent = pc;
-      hcEl.style.display = hc ? '' : 'none'; hcEl.textContent = hc;
-    }
+        // ----- helpers -----
+        function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
+        function escapeHtml(s) { return (s + '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+        function formatBytes(n) { if (n < 1024) return n + ' B'; if (n < 1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
 
-    $('addParamBtn').onclick = () => { current.params.push({ k: '', v: '', on: true }); renderParams(); };
-    $('addHeaderBtn').onclick = () => { current.headers.push({ k: '', v: '', on: true }); renderHeaders(); };
+        function getCollection(id) { return collections.find(c => c.id === id); }
+        function getRequest(colId, reqId) {
+            const col = getCollection(colId);
+            if (!col) return null;
+            return col.requests.find(r => r.id === reqId) || null;
+        }
 
-    // ----- URL <-> params -----
-    function syncUrlFromParams() {
-      const [base] = (current.url || '').split('?');
-      const active = current.params.filter(p => p.on && p.k);
-      const qs = active.map(p => encodeURIComponent(p.k) + '=' + encodeURIComponent(p.v)).join('&');
-      current.url = qs ? base + '?' + qs : base;
-      urlInput.value = current.url;
-    }
-
-    function syncParamsFromUrl() {
-      try {
-        const qIdx = current.url.indexOf('?');
-        if (qIdx === -1) return;
-        const qs = current.url.slice(qIdx + 1);
-        const parts = qs.split('&').filter(Boolean);
-        current.params = parts.map(p => {
-          const [k, v = ''] = p.split('=');
-          return { k: decodeURIComponent(k || ''), v: decodeURIComponent(v || ''), on: true };
+        // ----- Tabs -----
+        document.querySelectorAll('.tab').forEach(t => {
+            t.onclick = () => {
+                document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                $('pane-' + t.dataset.tab).classList.add('active');
+            };
         });
-        if (current.params.length === 0) current.params.push({ k: '', v: '', on: true });
-      } catch (_) {}
-    }
+        document.querySelectorAll('#respTabs span').forEach(s => {
+            s.onclick = () => {
+                document.querySelectorAll('#respTabs span').forEach(x => x.classList.remove('active'));
+                s.classList.add('active');
+                currentRespTab = s.dataset.rt;
+                renderResponseBody();
+            };
+        });
 
-    urlInput.oninput = () => {
-      current.url = urlInput.value;
-      syncParamsFromUrl();
-      renderParams();
-    };
-    methodSel.onchange = () => { current.method = methodSel.value; renderHistory(); };
+        // ----- KV table render -----
+        function renderKVTable(table, list, onChange) {
+            table.innerHTML = '';
+            list.forEach((row, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="width:26px"><input type="checkbox" ${row.on ? 'checked' : ''}></td>
+                    <td><input type="text" placeholder="key" value="${escapeAttr(row.k)}"></td>
+                    <td><input type="text" placeholder="value" value="${escapeAttr(row.v)}"></td>
+                    <td style="width:26px"><button class="rowBtn">✕</button></td>
+                `;
+                const [chk, kIn, vIn] = tr.querySelectorAll('input');
+                const del = tr.querySelector('button');
+                chk.onchange = () => { row.on = chk.checked; onChange(); };
+                kIn.oninput = () => { row.k = kIn.value; onChange(); };
+                vIn.oninput = () => { row.v = vIn.value; onChange(); };
+                del.onclick = () => { list.splice(i, 1); renderKVTable(table, list, onChange); onChange(); };
+                table.appendChild(tr);
+            });
+        }
 
-    // ----- Body -----
-    bodyTypeSel.onchange = () => {
-      current.bodyType = bodyTypeSel.value;
-      bodyText.style.display = current.bodyType === 'none' ? 'none' : 'block';
-      bodyHint.textContent = current.bodyType === 'json' ? 'Sent with Content-Type: application/json' :
-        current.bodyType === 'form' ? 'key=value&key2=value2 — Content-Type: application/x-www-form-urlencoded' :
-        current.bodyType === 'text' ? 'Sent as raw text/plain' : '';
-    };
-    bodyText.oninput = () => { current.body = bodyText.value; };
-    bodyTypeSel.dispatchEvent(new Event('change'));
+        function ensureTrailingEmpty(list) {
+            if (list.length === 0 || list[list.length - 1].k !== '' || list[list.length - 1].v !== '') {
+                list.push({ k: '', v: '', on: true });
+            }
+        }
 
-    // ----- Auth -----
-    function renderAuthFields() {
-      authType.value = current.auth.type;
-      let html = '';
-      if (current.auth.type === 'bearer') {
-        html = `<div class="auth-field"><label>Token</label><input id="authToken" type="text" value="${escapeAttr(current.auth.token)}" placeholder="your-token-here"></div>`;
-      } else if (current.auth.type === 'basic') {
-        html = `<div class="auth-field"><label>Username</label><input id="authUser" type="text" value="${escapeAttr(current.auth.user)}"></div>
-                <div class="auth-field"><label>Password</label><input id="authPass" type="text" value="${escapeAttr(current.auth.pass)}"></div>`;
-      } else if (current.auth.type === 'apikey') {
-        html = `<div class="auth-field"><label>Header Name</label><input id="authKey" type="text" value="${escapeAttr(current.auth.key || 'x-api-key')}"></div>
-                <div class="auth-field"><label>Value</label><input id="authVal" type="text" value="${escapeAttr(current.auth.value)}"></div>`;
-      } else {
-        html = `<div class="smallnote">No authorization.</div>`;
-      }
-      authFields.innerHTML = html;
-      if (current.auth.type === 'bearer') $('authToken').oninput = e => current.auth.token = e.target.value;
-      if (current.auth.type === 'basic') {
-        $('authUser').oninput = e => current.auth.user = e.target.value;
-        $('authPass').oninput = e => current.auth.pass = e.target.value;
-      }
-      if (current.auth.type === 'apikey') {
-        $('authKey').oninput = e => current.auth.key = e.target.value;
-        $('authVal').oninput = e => current.auth.value = e.target.value;
-      }
-    }
-    authType.onchange = () => { current.auth.type = authType.value; renderAuthFields(); };
+        function renderParams() {
+            if (!currentRequest) return;
+            ensureTrailingEmpty(currentRequest.params);
+            renderKVTable(paramsTable, currentRequest.params, () => {
+                syncUrlFromParams();
+                ensureTrailingEmpty(currentRequest.params);
+                updateBadges();
+            });
+            updateBadges();
+        }
 
-    // ----- load current into form -----
-    function loadCurrentIntoForm() {
-      methodSel.value = current.method;
-      urlInput.value = current.url || '';
-      if (current.params.length === 0) current.params = [{ k: '', v: '', on: true }];
-      if (current.headers.length === 0) current.headers = [{ k: '', v: '', on: true }];
-      renderParams();
-      renderHeaders();
-      bodyTypeSel.value = current.bodyType || 'json';
-      bodyText.value = current.body || '';
-      bodyTypeSel.dispatchEvent(new Event('change'));
-      renderAuthFields();
-      if (current.response) {
-        lastResponseRaw = current.response.body || '';
-        lastResponseHeaders = current.response.headers || [];
-        statusPill.style.display = 'inline-block';
-        statusPill.textContent = current.response.status ? `${current.response.status} ${current.response.statusText}` : current.response.statusText;
-        statusPill.className = '';
-        const code = current.response.status || 0;
-        if (code >= 200 && code < 300) statusPill.classList.add('s2');
-        else if (code >= 300 && code < 400) statusPill.classList.add('s3');
-        else if (code >= 400 && code < 500) statusPill.classList.add('s4');
-        else statusPill.classList.add('s5');
-        respTime.textContent = current.response.time ? current.response.time + ' ms' : '';
-        respSize.textContent = current.response.size ? formatBytes(current.response.size) : '';
-        renderResponseBody();
-      } else {
-        clearResponse();
-      }
-    }
+        function renderHeaders() {
+            if (!currentRequest) return;
+            ensureTrailingEmpty(currentRequest.headers);
+            renderKVTable(headersTable, currentRequest.headers, () => {
+                ensureTrailingEmpty(currentRequest.headers);
+                updateBadges();
+            });
+            updateBadges();
+        }
 
-    function clearResponse() {
-      statusPill.style.display = 'none';
-      respTime.textContent = '';
-      respSize.textContent = '';
-      respBody.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
-      lastResponseRaw = '';
-      lastResponseHeaders = [];
-    }
+        function updateBadges() {
+            if (!currentRequest) return;
+            const pc = currentRequest.params.filter(p => p.on && p.k).length;
+            const hc = currentRequest.headers.filter(h => h.on && h.k).length;
+            const pcEl = $('paramCount'), hcEl = $('headerCount');
+            pcEl.style.display = pc ? '' : 'none'; pcEl.textContent = pc;
+            hcEl.style.display = hc ? '' : 'none'; hcEl.textContent = hc;
+        }
 
-    // ----- History render with rename + delete -----
-    function renderHistory() {
-      historyEl.innerHTML = '';
-      requests.forEach((r, idx) => {
-        const div = document.createElement('div');
-        div.className = 'hist-item' + (idx === activeIndex ? ' active' : '');
-        const methodSpan = document.createElement('span');
-        methodSpan.className = 'hist-method m-' + r.method;
-        methodSpan.textContent = r.method;
-        const urlSpan = document.createElement('span');
-        urlSpan.className = 'hist-url';
-        urlSpan.textContent = r.name || r.url || '(no url)';
+        $('addParamBtn').onclick = () => { if (currentRequest) { currentRequest.params.push({ k: '', v: '', on: true }); renderParams(); } };
+        $('addHeaderBtn').onclick = () => { if (currentRequest) { currentRequest.headers.push({ k: '', v: '', on: true }); renderHeaders(); } };
 
-        const actions = document.createElement('span');
-        actions.className = 'hist-actions';
+        // ----- URL <-> params -----
+        function syncUrlFromParams() {
+            if (!currentRequest) return;
+            const [base] = (currentRequest.url || '').split('?');
+            const active = currentRequest.params.filter(p => p.on && p.k);
+            const qs = active.map(p => encodeURIComponent(p.k) + '=' + encodeURIComponent(p.v)).join('&');
+            currentRequest.url = qs ? base + '?' + qs : base;
+            urlInput.value = currentRequest.url;
+        }
 
-        const renameBtn = document.createElement('button');
-        renameBtn.className = 'hist-rename';
-        renameBtn.textContent = '✎';
-        renameBtn.title = 'Rename request';
-        renameBtn.onclick = (e) => {
-          e.stopPropagation();
-          const currentName = r.name || 'Untitled';
-          const newName = prompt('Rename request:', currentName);
-          if (newName !== null && newName.trim() !== '') {
-            r.name = newName.trim();
+        function syncParamsFromUrl() {
+            if (!currentRequest) return;
+            try {
+                const qIdx = currentRequest.url.indexOf('?');
+                if (qIdx === -1) return;
+                const qs = currentRequest.url.slice(qIdx + 1);
+                const parts = qs.split('&').filter(Boolean);
+                currentRequest.params = parts.map(p => {
+                    const [k, v = ''] = p.split('=');
+                    return { k: decodeURIComponent(k || ''), v: decodeURIComponent(v || ''), on: true };
+                });
+                if (currentRequest.params.length === 0) currentRequest.params.push({ k: '', v: '', on: true });
+            } catch (_) {}
+        }
+
+        urlInput.oninput = () => {
+            if (currentRequest) {
+                currentRequest.url = urlInput.value;
+                syncParamsFromUrl();
+                renderParams();
+            }
+        };
+        methodSel.onchange = () => { if (currentRequest) { currentRequest.method = methodSel.value; renderHistory(); } };
+
+        // ----- Body -----
+        bodyTypeSel.onchange = () => {
+            if (!currentRequest) return;
+            currentRequest.bodyType = bodyTypeSel.value;
+            bodyText.style.display = currentRequest.bodyType === 'none' ? 'none' : 'block';
+            bodyHint.textContent = currentRequest.bodyType === 'json' ? 'Sent with Content-Type: application/json' :
+                currentRequest.bodyType === 'form' ? 'key=value&key2=value2 — Content-Type: application/x-www-form-urlencoded' :
+                currentRequest.bodyType === 'text' ? 'Sent as raw text/plain' : '';
+        };
+        bodyText.oninput = () => { if (currentRequest) currentRequest.body = bodyText.value; };
+        bodyTypeSel.dispatchEvent(new Event('change'));
+
+        // ----- Auth -----
+        function renderAuthFields() {
+            if (!currentRequest) return;
+            authType.value = currentRequest.auth.type;
+            let html = '';
+            if (currentRequest.auth.type === 'bearer') {
+                html = `<div class="auth-field"><label>Token</label><input id="authToken" type="text" value="${escapeAttr(currentRequest.auth.token)}" placeholder="your-token-here"></div>`;
+            } else if (currentRequest.auth.type === 'basic') {
+                html = `<div class="auth-field"><label>Username</label><input id="authUser" type="text" value="${escapeAttr(currentRequest.auth.user)}"></div>
+                        <div class="auth-field"><label>Password</label><input id="authPass" type="text" value="${escapeAttr(currentRequest.auth.pass)}"></div>`;
+            } else if (currentRequest.auth.type === 'apikey') {
+                html = `<div class="auth-field"><label>Header Name</label><input id="authKey" type="text" value="${escapeAttr(currentRequest.auth.key || 'x-api-key')}"></div>
+                        <div class="auth-field"><label>Value</label><input id="authVal" type="text" value="${escapeAttr(currentRequest.auth.value)}"></div>`;
+            } else {
+                html = `<div class="smallnote">No authorization.</div>`;
+            }
+            authFields.innerHTML = html;
+            if (currentRequest.auth.type === 'bearer') $('authToken').oninput = e => currentRequest.auth.token = e.target.value;
+            if (currentRequest.auth.type === 'basic') {
+                $('authUser').oninput = e => currentRequest.auth.user = e.target.value;
+                $('authPass').oninput = e => currentRequest.auth.pass = e.target.value;
+            }
+            if (currentRequest.auth.type === 'apikey') {
+                $('authKey').oninput = e => currentRequest.auth.key = e.target.value;
+                $('authVal').oninput = e => currentRequest.auth.value = e.target.value;
+            }
+        }
+        authType.onchange = () => { if (currentRequest) { currentRequest.auth.type = authType.value; renderAuthFields(); } };
+
+        // ----- load current into form -----
+        function loadCurrentIntoForm() {
+            if (!currentRequest) {
+                clearResponse();
+                return;
+            }
+            methodSel.value = currentRequest.method;
+            urlInput.value = currentRequest.url || '';
+            if (currentRequest.params.length === 0) currentRequest.params = [{ k: '', v: '', on: true }];
+            if (currentRequest.headers.length === 0) currentRequest.headers = [{ k: '', v: '', on: true }];
+            renderParams();
+            renderHeaders();
+            bodyTypeSel.value = currentRequest.bodyType || 'json';
+            bodyText.value = currentRequest.body || '';
+            bodyTypeSel.dispatchEvent(new Event('change'));
+            renderAuthFields();
+            if (currentRequest.response) {
+                lastResponseRaw = currentRequest.response.body || '';
+                lastResponseHeaders = currentRequest.response.headers || [];
+                statusPill.style.display = 'inline-block';
+                statusPill.textContent = currentRequest.response.status ? `${currentRequest.response.status} ${currentRequest.response.statusText}` : currentRequest.response.statusText;
+                statusPill.className = '';
+                const code = currentRequest.response.status || 0;
+                if (code >= 200 && code < 300) statusPill.classList.add('s2');
+                else if (code >= 300 && code < 400) statusPill.classList.add('s3');
+                else if (code >= 400 && code < 500) statusPill.classList.add('s4');
+                else statusPill.classList.add('s5');
+                respTime.textContent = currentRequest.response.time ? currentRequest.response.time + ' ms' : '';
+                respSize.textContent = currentRequest.response.size ? formatBytes(currentRequest.response.size) : '';
+                renderResponseBody();
+            } else {
+                clearResponse();
+            }
+        }
+
+        function clearResponse() {
+            statusPill.style.display = 'none';
+            respTime.textContent = '';
+            respSize.textContent = '';
+            respBody.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
+            lastResponseRaw = '';
+            lastResponseHeaders = [];
+        }
+
+        // ----- History render with collections -----
+        function renderHistory() {
+            historyEl.innerHTML = '';
+            if (collections.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'color: var(--muted); padding: 20px; text-align: center; font-size: 13px;';
+                empty.textContent = 'No collections yet. Create one to start!';
+                historyEl.appendChild(empty);
+                return;
+            }
+
+            collections.forEach(col => {
+                const header = document.createElement('div');
+                header.className = 'collection-header';
+                const isCollapsed = localStorage.getItem('collapsed_' + col.id) === 'true';
+                
+                const icon = document.createElement('span');
+                icon.className = 'collapse-icon' + (isCollapsed ? ' collapsed' : '');
+                icon.textContent = '▼';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = col.name + ' (' + col.requests.length + ')';
+                
+                const actions = document.createElement('span');
+                actions.className = 'collection-actions';
+                
+                const renameBtn = document.createElement('button');
+                renameBtn.textContent = '✎';
+                renameBtn.title = 'Rename collection';
+                renameBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const newName = prompt('Rename collection:', col.name);
+                    if (newName && newName.trim()) {
+                        col.name = newName.trim();
+                        saveToStorage();
+                        renderHistory();
+                    }
+                };
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'del-col';
+                delBtn.textContent = '🗑';
+                delBtn.title = 'Delete collection';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    showConfirm(
+                        'Delete Collection',
+                        `Are you sure you want to delete the collection "<span class="highlight">${escapeHtml(col.name)}</span>" and all its ${col.requests.length} requests?`,
+                        () => {
+                            const idx = collections.findIndex(c => c.id === col.id);
+                            if (idx > -1) {
+                                collections.splice(idx, 1);
+                                if (activeCollectionId === col.id) {
+                                    activeCollectionId = null;
+                                    activeRequestId = null;
+                                    currentRequest = null;
+                                }
+                                saveToStorage();
+                                renderHistory();
+                                loadCurrentIntoForm();
+                            }
+                        }
+                    );
+                };
+                
+                actions.appendChild(renameBtn);
+                actions.appendChild(delBtn);
+                
+                header.appendChild(icon);
+                header.appendChild(nameSpan);
+                header.appendChild(actions);
+                
+                header.onclick = () => {
+                    const isNowCollapsed = localStorage.getItem('collapsed_' + col.id) === 'true';
+                    localStorage.setItem('collapsed_' + col.id, isNowCollapsed ? 'false' : 'true');
+                    renderHistory();
+                };
+                
+                historyEl.appendChild(header);
+                
+                const itemsDiv = document.createElement('div');
+                itemsDiv.className = 'collection-items' + (isCollapsed ? ' collapsed' : '');
+                itemsDiv.style.maxHeight = isCollapsed ? '0' : (col.requests.length * 40 + 20) + 'px';
+                
+                col.requests.forEach(req => {
+                    const div = document.createElement('div');
+                    div.className = 'hist-item' + (req.id === activeRequestId && col.id === activeCollectionId ? ' active' : '');
+                    
+                    const methodSpan = document.createElement('span');
+                    methodSpan.className = 'hist-method m-' + req.method;
+                    methodSpan.textContent = req.method;
+                    
+                    const urlSpan = document.createElement('span');
+                    urlSpan.className = 'hist-url';
+                    urlSpan.textContent = req.name || req.url || '(no url)';
+                    
+                    const actions2 = document.createElement('span');
+                    actions2.className = 'hist-actions';
+                    
+                    const renameBtn2 = document.createElement('button');
+                    renameBtn2.className = 'hist-rename';
+                    renameBtn2.textContent = '✎';
+                    renameBtn2.title = 'Rename request';
+                    renameBtn2.onclick = (e) => {
+                        e.stopPropagation();
+                        const newName = prompt('Rename request:', req.name || 'Untitled');
+                        if (newName !== null && newName.trim() !== '') {
+                            req.name = newName.trim();
+                            saveToStorage();
+                            renderHistory();
+                        } else if (newName !== null && newName.trim() === '') {
+                            req.name = 'Untitled';
+                            saveToStorage();
+                            renderHistory();
+                        }
+                    };
+                    
+                    const delBtn2 = document.createElement('button');
+                    delBtn2.className = 'hist-delete';
+                    delBtn2.textContent = '🗑';
+                    delBtn2.title = 'Delete request';
+                    delBtn2.onclick = (e) => {
+                        e.stopPropagation();
+                        showConfirm(
+                            'Delete Request',
+                            `Are you sure you want to delete "<span class="highlight">${escapeHtml(req.name || req.url || 'Untitled')}</span>"?`,
+                            () => {
+                                const idx = col.requests.findIndex(r => r.id === req.id);
+                                if (idx > -1) {
+                                    col.requests.splice(idx, 1);
+                                    if (activeRequestId === req.id && activeCollectionId === col.id) {
+                                        activeRequestId = null;
+                                        currentRequest = null;
+                                    }
+                                    saveToStorage();
+                                    renderHistory();
+                                    loadCurrentIntoForm();
+                                }
+                            }
+                        );
+                    };
+                    
+                    const moveBtn = document.createElement('button');
+                    moveBtn.className = 'hist-move';
+                    moveBtn.textContent = '⇄';
+                    moveBtn.title = 'Move to collection';
+                    moveBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        showMoveDialog(req.id, col.id);
+                    };
+                    
+                    actions2.appendChild(renameBtn2);
+                    actions2.appendChild(moveBtn);
+                    actions2.appendChild(delBtn2);
+                    
+                    div.appendChild(methodSpan);
+                    div.appendChild(urlSpan);
+                    div.appendChild(actions2);
+                    
+                    div.onclick = () => {
+                        activeCollectionId = col.id;
+                        activeRequestId = req.id;
+                        currentRequest = req;
+                        loadCurrentIntoForm();
+                        renderHistory();
+                    };
+                    
+                    itemsDiv.appendChild(div);
+                });
+                
+                historyEl.appendChild(itemsDiv);
+            });
+        }
+
+        // ----- Move request dialog -----
+        function showMoveDialog(reqId, currentColId) {
+            const req = getRequest(currentColId, reqId);
+            if (!req) return;
+            
+            const colNames = collections
+                .filter(c => c.id !== currentColId)
+                .map(c => ({ id: c.id, name: c.name }));
+            
+            if (colNames.length === 0) {
+                alert('No other collections available to move to.');
+                return;
+            }
+            
+            const options = colNames.map((c, i) => `${i+1}. ${c.name}`).join('\n');
+            const choice = prompt(
+                `Move "${req.name || req.url || 'Untitled'}" to which collection?\n\n${options}\n\nEnter the number:`,
+                '1'
+            );
+            
+            if (choice === null) return;
+            const idx = parseInt(choice) - 1;
+            if (idx >= 0 && idx < colNames.length) {
+                const targetCol = getCollection(colNames[idx].id);
+                if (targetCol) {
+                    // Remove from current
+                    const currentCol = getCollection(currentColId);
+                    const reqIdx = currentCol.requests.findIndex(r => r.id === reqId);
+                    if (reqIdx > -1) {
+                        const movedReq = currentCol.requests.splice(reqIdx, 1)[0];
+                        targetCol.requests.push(movedReq);
+                        if (activeCollectionId === currentColId && activeRequestId === reqId) {
+                            activeCollectionId = targetCol.id;
+                            activeRequestId = movedReq.id;
+                            currentRequest = movedReq;
+                        }
+                        saveToStorage();
+                        renderHistory();
+                        loadCurrentIntoForm();
+                    }
+                }
+            }
+        }
+
+        // ----- Confirm dialog -----
+        function showConfirm(title, message, onConfirm) {
+            confirmTitle.textContent = title;
+            confirmMessage.innerHTML = message;
+            confirmOk.className = 'btn-danger';
+            confirmOk.textContent = 'Confirm';
+            confirmOk.onclick = () => {
+                closeConfirm();
+                if (onConfirm) onConfirm();
+            };
+            confirmCancel.onclick = closeConfirm;
+            confirmDialog.classList.add('open');
+            confirmCallback = onConfirm;
+        }
+
+        function closeConfirm() {
+            confirmDialog.classList.remove('open');
+            confirmCallback = null;
+        }
+
+        confirmDialog.addEventListener('click', (e) => {
+            if (e.target === confirmDialog) closeConfirm();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && confirmDialog.classList.contains('open')) {
+                closeConfirm();
+            }
+        });
+
+        // ----- Save -----
+        $('saveBtn').onclick = () => {
+            if (!currentRequest) {
+                alert('No request loaded. Select or create a request first.');
+                return;
+            }
+            syncUrlFromParams();
+            if (!currentRequest.url) { flashUrl(); return; }
+            
+            // Find the collection and update
+            const col = getCollection(activeCollectionId);
+            if (!col) {
+                // Create a new collection if none exists
+                const newCol = blankCollection('My Collection');
+                newCol.requests.push(currentRequest);
+                collections.push(newCol);
+                activeCollectionId = newCol.id;
+            } else {
+                // Update existing
+                const idx = col.requests.findIndex(r => r.id === currentRequest.id);
+                if (idx > -1) {
+                    col.requests[idx] = JSON.parse(JSON.stringify(currentRequest));
+                } else {
+                    col.requests.push(JSON.parse(JSON.stringify(currentRequest)));
+                    activeRequestId = currentRequest.id;
+                }
+            }
             saveToStorage();
             renderHistory();
-          } else if (newName !== null && newName.trim() === '') {
-            r.name = 'Untitled';
+        };
+
+        function flashUrl() {
+            urlInput.style.borderColor = 'var(--err)';
+            urlInput.placeholder = 'Enter a URL first';
+            setTimeout(() => { urlInput.style.borderColor = 'var(--input-border)'; urlInput.placeholder = 'https://api.example.com/v1/resource'; }, 900);
+        }
+
+        // ----- New request -----
+        $('newReqBtn').onclick = () => {
+            const newReq = blankRequest();
+            if (collections.length === 0) {
+                const newCol = blankCollection('My Collection');
+                collections.push(newCol);
+                activeCollectionId = newCol.id;
+            }
+            const col = getCollection(activeCollectionId) || collections[0];
+            col.requests.push(newReq);
+            activeRequestId = newReq.id;
+            currentRequest = newReq;
             saveToStorage();
+            loadCurrentIntoForm();
             renderHistory();
-          }
         };
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'hist-delete';
-        deleteBtn.textContent = '🗑';
-        deleteBtn.title = 'Delete request';
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          // Show confirmation dialog
-          pendingDeleteIndex = idx;
-          confirmRequestName.textContent = r.name || r.url || 'Untitled';
-          confirmDialog.classList.add('open');
+        // ----- New collection -----
+        $('newCollectionBtn').onclick = () => {
+            const name = prompt('Enter collection name:', 'New Collection');
+            if (name !== null && name.trim() !== '') {
+                const newCol = blankCollection(name.trim());
+                collections.push(newCol);
+                activeCollectionId = newCol.id;
+                activeRequestId = null;
+                currentRequest = null;
+                saveToStorage();
+                renderHistory();
+                loadCurrentIntoForm();
+            }
         };
 
-        actions.appendChild(renameBtn);
-        actions.appendChild(deleteBtn);
+        // ----- Send -----
+        $('sendBtn').onclick = sendRequest;
+        urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendRequest(); });
 
-        div.appendChild(methodSpan);
-        div.appendChild(urlSpan);
-        div.appendChild(actions);
+        async function sendRequest() {
+            if (!currentRequest) {
+                alert('No request loaded.');
+                return;
+            }
+            syncUrlFromParams();
+            if (!currentRequest.url) { flashUrl(); return; }
+            let finalUrl = currentRequest.url;
+            if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
 
-        div.onclick = () => {
-          activeIndex = idx;
-          current = JSON.parse(JSON.stringify(requests[idx]));
-          if (requests[idx].response) {
-            current.response = JSON.parse(JSON.stringify(requests[idx].response));
-          } else {
-            current.response = null;
-          }
-          loadCurrentIntoForm();
-          renderHistory();
+            const headers = {};
+            currentRequest.headers.filter(h => h.on && h.k).forEach(h => headers[h.k] = h.v);
+
+            if (currentRequest.auth.type === 'bearer' && currentRequest.auth.token) {
+                headers['Authorization'] = 'Bearer ' + currentRequest.auth.token;
+            } else if (currentRequest.auth.type === 'basic' && (currentRequest.auth.user || currentRequest.auth.pass)) {
+                headers['Authorization'] = 'Basic ' + btoa(currentRequest.auth.user + ':' + currentRequest.auth.pass);
+            } else if (currentRequest.auth.type === 'apikey' && currentRequest.auth.key) {
+                headers[currentRequest.auth.key] = currentRequest.auth.value;
+            }
+
+            let bodyToSend;
+            const method = currentRequest.method;
+            const canHaveBody = !['GET', 'HEAD'].includes(method);
+            if (canHaveBody && currentRequest.bodyType !== 'none' && currentRequest.body) {
+                if (currentRequest.bodyType === 'json') {
+                    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+                    bodyToSend = currentRequest.body;
+                } else if (currentRequest.bodyType === 'text') {
+                    headers['Content-Type'] = headers['Content-Type'] || 'text/plain';
+                    bodyToSend = currentRequest.body;
+                } else if (currentRequest.bodyType === 'form') {
+                    headers['Content-Type'] = headers['Content-Type'] || 'application/x-www-form-urlencoded';
+                    bodyToSend = currentRequest.body;
+                }
+            }
+
+            const sendBtn = $('sendBtn');
+            sendBtn.disabled = true; sendBtn.textContent = 'Sending...';
+            statusPill.style.display = 'none';
+            respTime.textContent = '';
+            respSize.textContent = '';
+            respBody.innerHTML = '<div id="respPlaceholder">Loading…</div>';
+
+            const t0 = performance.now();
+            try {
+                const res = await fetch(finalUrl, { method, headers, body: bodyToSend, mode: 'cors' });
+                const elapsed = Math.round(performance.now() - t0);
+                const text = await res.text();
+                lastResponseRaw = text;
+                lastResponseHeaders = [...res.headers.entries()];
+                const size = new Blob([text]).size;
+
+                currentRequest.response = {
+                    status: res.status,
+                    statusText: res.statusText,
+                    time: elapsed,
+                    size: size,
+                    body: text,
+                    headers: lastResponseHeaders
+                };
+
+                showStatus(res.status, res.statusText);
+                respTime.textContent = elapsed + ' ms';
+                respSize.textContent = formatBytes(size);
+                renderResponseBody();
+
+                // Auto-save response
+                const col = getCollection(activeCollectionId);
+                if (col) {
+                    const idx = col.requests.findIndex(r => r.id === currentRequest.id);
+                    if (idx > -1) {
+                        col.requests[idx] = JSON.parse(JSON.stringify(currentRequest));
+                        saveToStorage();
+                    }
+                }
+            } catch (err) {
+                showStatus(0, 'Network Error');
+                respBody.innerHTML = `<div style="color:var(--err)">⚠ ${escapeHtml(err.message)}<br><span class="muted">CORS, unreachable, or invalid URL.</span></div>`;
+                currentRequest.response = null;
+            } finally {
+                sendBtn.disabled = false; sendBtn.textContent = 'Send';
+            }
+        }
+
+        function showStatus(code, text) {
+            statusPill.style.display = 'inline-block';
+            statusPill.textContent = code ? `${code} ${text}` : text;
+            statusPill.className = '';
+            if (code >= 200 && code < 300) statusPill.classList.add('s2');
+            else if (code >= 300 && code < 400) statusPill.classList.add('s3');
+            else if (code >= 400 && code < 500) statusPill.classList.add('s4');
+            else statusPill.classList.add('s5');
+        }
+
+        function renderResponseBody() {
+            const box = respBody;
+            if (currentRespTab === 'headers') {
+                if (!lastResponseHeaders || lastResponseHeaders.length === 0) {
+                    box.innerHTML = '<div class="muted">No headers</div>';
+                    return;
+                }
+                box.innerHTML = lastResponseHeaders.map(([k, v]) =>
+                    `<div><span class="json-key">${escapeHtml(k)}</span>: ${escapeHtml(v)}</div>`
+                ).join('');
+                return;
+            }
+            if (!lastResponseRaw) {
+                box.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
+                return;
+            }
+            try {
+                const obj = JSON.parse(lastResponseRaw);
+                box.innerHTML = syntaxHighlight(JSON.stringify(obj, null, 2));
+            } catch (_) {
+                box.textContent = lastResponseRaw;
+            }
+        }
+
+        function syntaxHighlight(json) {
+            json = escapeHtml(json);
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|null|-?\d+(\.\d+)?([eE][+-]?\d+)?)/g, match => {
+                let cls = 'json-num';
+                if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
+                else if (/true|false/.test(match)) cls = 'json-bool';
+                else if (/null/.test(match)) cls = 'json-null';
+                return `<span class="${cls}">${match}</span>`;
+            });
+        }
+
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(lastResponseRaw || '').then(() => {
+                const orig = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = orig, 1200);
+            });
         };
-        historyEl.appendChild(div);
-      });
-    }
 
-    // ----- Confirm dialog handlers -----
-    function closeConfirm() {
-      confirmDialog.classList.remove('open');
-      pendingDeleteIndex = -1;
-    }
+        // ----- EXPORT -----
+        function generateExport() {
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                version: '1.0',
+                collections: collections.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    requests: c.requests.map(r => ({
+                        id: r.id,
+                        name: r.name || 'Untitled',
+                        method: r.method,
+                        url: r.url,
+                        params: r.params.filter(p => p.on && p.k).map(p => ({ key: p.k, value: p.v })),
+                        headers: r.headers.filter(h => h.on && h.k).map(h => ({ key: h.k, value: h.v })),
+                        auth: {
+                            type: r.auth.type,
+                            ...(r.auth.type === 'bearer' ? { token: r.auth.token || '' } : {}),
+                            ...(r.auth.type === 'basic' ? { username: r.auth.user || '', password: r.auth.pass || '' } : {}),
+                            ...(r.auth.type === 'apikey' ? { headerName: r.auth.key || 'x-api-key', value: r.auth.value || '' } : {})
+                        },
+                        body: {
+                            type: r.bodyType || 'none',
+                            content: r.body || ''
+                        },
+                        response: r.response ? {
+                            status: r.response.status,
+                            statusText: r.response.statusText,
+                            timeMs: r.response.time,
+                            sizeBytes: r.response.size,
+                            body: r.response.body,
+                            headers: r.response.headers ? Object.fromEntries(r.response.headers) : {}
+                        } : null
+                    }))
+                }))
+            };
+            return JSON.stringify(exportData, null, 2);
+        }
 
-    document.getElementById('confirmCancel').addEventListener('click', closeConfirm);
-    document.getElementById('confirmDelete').addEventListener('click', () => {
-      if (pendingDeleteIndex >= 0 && pendingDeleteIndex < requests.length) {
-        const deletedName = requests[pendingDeleteIndex].name || 'Untitled';
-        requests.splice(pendingDeleteIndex, 1);
-        saveToStorage();
-        
-        // Adjust active index
-        if (requests.length === 0) {
-          // No requests left, create a blank one
-          const blank = blankRequest('Untitled');
-          requests.push(blank);
-          activeIndex = 0;
-          current = blank;
-        } else if (pendingDeleteIndex === activeIndex) {
-          // Deleted the active one, select the first
-          activeIndex = 0;
-          current = JSON.parse(JSON.stringify(requests[0]));
-        } else if (pendingDeleteIndex < activeIndex) {
-          activeIndex--;
+        function openExportModal() {
+            exportText.value = generateExport();
+            exportModal.classList.add('open');
+        }
+
+        function closeExportModal() {
+            exportModal.classList.remove('open');
+        }
+
+        document.getElementById('exportBtn').addEventListener('click', openExportModal);
+        document.getElementById('closeExportBtn').addEventListener('click', closeExportModal);
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) closeExportModal();
+        });
+
+        document.getElementById('copyExportBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(exportText.value).then(() => {
+                const btn = document.getElementById('copyExportBtn');
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = orig, 1500);
+            });
+        });
+
+        document.getElementById('downloadExportBtn').addEventListener('click', () => {
+            const blob = new Blob([exportText.value], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `api-collections-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // ----- IMPORT -----
+        function openImportModal() {
+            importText.value = '';
+            importStatus.textContent = '';
+            importAllCheck.checked = true;
+            importModal.classList.add('open');
+        }
+
+        function closeImportModal() {
+            importModal.classList.remove('open');
+        }
+
+        document.getElementById('importBtn').addEventListener('click', openImportModal);
+        document.getElementById('closeImportBtn').addEventListener('click', closeImportModal);
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) closeImportModal();
+        });
+
+        document.getElementById('confirmImportBtn').addEventListener('click', () => {
+            try {
+                const data = JSON.parse(importText.value);
+                if (!data.collections || !Array.isArray(data.collections)) {
+                    throw new Error('Invalid format: missing "collections" array');
+                }
+
+                const importAll = importAllCheck.checked;
+                let imported = 0;
+
+                if (importAll) {
+                    // Import all collections
+                    data.collections.forEach(c => {
+                        const newCol = blankCollection(c.name || 'Imported Collection');
+                        newCol.id = c.id || uid();
+                        c.requests.forEach(r => {
+                            const newReq = blankRequest(r.name || 'Untitled');
+                            newReq.id = r.id || uid();
+                            newReq.method = r.method || 'GET';
+                            newReq.url = r.url || '';
+                            newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                            newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                            newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
+                            newReq.bodyType = r.body?.type || 'json';
+                            newReq.body = r.body?.content || '';
+                            if (r.response) {
+                                newReq.response = {
+                                    status: r.response.status,
+                                    statusText: r.response.statusText,
+                                    time: r.response.timeMs,
+                                    size: r.response.sizeBytes,
+                                    body: r.response.body,
+                                    headers: r.response.headers ? Object.entries(r.response.headers) : []
+                                };
+                            }
+                            newCol.requests.push(newReq);
+                        });
+                        collections.push(newCol);
+                        imported++;
+                    });
+                } else {
+                    // Import specific collections - show selection
+                    const colNames = data.collections.map((c, i) => `${i+1}. ${c.name || 'Unnamed'}`);
+                    const choice = prompt(
+                        `Select which collection to import (enter number):\n\n${colNames.join('\n')}\n\nOr type "all" to import all:`,
+                        '1'
+                    );
+                    if (choice === null) return;
+                    
+                    if (choice.toLowerCase() === 'all') {
+                        // Import all
+                        data.collections.forEach(c => {
+                            const newCol = blankCollection(c.name || 'Imported Collection');
+                            newCol.id = c.id || uid();
+                            c.requests.forEach(r => {
+                                const newReq = blankRequest(r.name || 'Untitled');
+                                newReq.id = r.id || uid();
+                                newReq.method = r.method || 'GET';
+                                newReq.url = r.url || '';
+                                newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                                newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                                newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
+                                newReq.bodyType = r.body?.type || 'json';
+                                newReq.body = r.body?.content || '';
+                                if (r.response) {
+                                    newReq.response = {
+                                        status: r.response.status,
+                                        statusText: r.response.statusText,
+                                        time: r.response.timeMs,
+                                        size: r.response.sizeBytes,
+                                        body: r.response.body,
+                                        headers: r.response.headers ? Object.entries(r.response.headers) : []
+                                    };
+                                }
+                                newCol.requests.push(newReq);
+                            });
+                            collections.push(newCol);
+                            imported++;
+                        });
+                    } else {
+                        const idx = parseInt(choice) - 1;
+                        if (idx >= 0 && idx < data.collections.length) {
+                            const c = data.collections[idx];
+                            const newCol = blankCollection(c.name || 'Imported Collection');
+                            newCol.id = c.id || uid();
+                            c.requests.forEach(r => {
+                                const newReq = blankRequest(r.name || 'Untitled');
+                                newReq.id = r.id || uid();
+                                newReq.method = r.method || 'GET';
+                                newReq.url = r.url || '';
+                                newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                                newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
+                                newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
+                                newReq.bodyType = r.body?.type || 'json';
+                                newReq.body = r.body?.content || '';
+                                if (r.response) {
+                                    newReq.response = {
+                                        status: r.response.status,
+                                        statusText: r.response.statusText,
+                                        time: r.response.timeMs,
+                                        size: r.response.sizeBytes,
+                                        body: r.response.body,
+                                        headers: r.response.headers ? Object.entries(r.response.headers) : []
+                                    };
+                                }
+                                newCol.requests.push(newReq);
+                            });
+                            collections.push(newCol);
+                            imported++;
+                        } else {
+                            throw new Error('Invalid selection');
+                        }
+                    }
+                }
+
+                if (imported === 0) {
+                    importStatus.textContent = '❌ No collections imported.';
+                    return;
+                }
+
+                saveToStorage();
+                renderHistory();
+                closeImportModal();
+                importStatus.textContent = `✅ Imported ${imported} collection(s) successfully!`;
+                setTimeout(() => importStatus.textContent = '', 3000);
+
+            } catch (err) {
+                importStatus.textContent = '❌ Error: ' + err.message;
+                setTimeout(() => importStatus.textContent = '', 4000);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (exportModal.classList.contains('open')) closeExportModal();
+                if (importModal.classList.contains('open')) closeImportModal();
+                if (confirmDialog.classList.contains('open')) closeConfirm();
+            }
+        });
+
+        // ----- INIT -----
+        const hasData = loadFromStorage();
+        if (!hasData || collections.length === 0) {
+            // Seed with example
+            const exampleCol = blankCollection('Example Collection');
+            const exampleReq = blankRequest('Example GET');
+            exampleReq.url = 'https://jsonplaceholder.typicode.com/posts/1';
+            exampleReq.method = 'GET';
+            exampleCol.requests.push(exampleReq);
+            collections.push(exampleCol);
+            activeCollectionId = exampleCol.id;
+            activeRequestId = exampleReq.id;
+            currentRequest = exampleReq;
+            saveToStorage();
+        } else {
+            // Load first request if exists
+            if (collections.length > 0) {
+                const firstCol = collections[0];
+                activeCollectionId = firstCol.id;
+                if (firstCol.requests.length > 0) {
+                    activeRequestId = firstCol.requests[0].id;
+                    currentRequest = firstCol.requests[0];
+                } else {
+                    // Create a default request
+                    const newReq = blankRequest('New Request');
+                    firstCol.requests.push(newReq);
+                    activeRequestId = newReq.id;
+                    currentRequest = newReq;
+                    saveToStorage();
+                }
+            }
         }
         loadCurrentIntoForm();
         renderHistory();
-        closeConfirm();
-      } else {
-        closeConfirm();
-      }
-    });
-
-    // Close confirm on overlay click
-    confirmDialog.addEventListener('click', (e) => {
-      if (e.target === confirmDialog) closeConfirm();
-    });
-
-    // Escape key to close confirm
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && confirmDialog.classList.contains('open')) {
-        closeConfirm();
-      }
-    });
-
-    // ----- Save -----
-    $('saveBtn').onclick = () => {
-      syncUrlFromParams();
-      if (!current.url) { flashUrl(); return; }
-      const snapshot = JSON.parse(JSON.stringify(current));
-      if (current.response) snapshot.response = JSON.parse(JSON.stringify(current.response));
-      else snapshot.response = null;
-
-      if (activeIndex >= 0 && requests[activeIndex]) {
-        if (requests[activeIndex].name) snapshot.name = requests[activeIndex].name;
-        requests[activeIndex] = snapshot;
-      } else {
-        let name = prompt('Name this request:', current.url || 'Untitled');
-        if (name === null) return;
-        if (name.trim() === '') name = 'Untitled';
-        snapshot.name = name.trim();
-        requests.unshift(snapshot);
-        activeIndex = 0;
-      }
-      saveToStorage();
-      renderHistory();
-    };
-
-    function flashUrl() {
-      urlInput.style.borderColor = 'var(--err)';
-      urlInput.placeholder = 'Enter a URL first';
-      setTimeout(() => { urlInput.style.borderColor = 'var(--input-border)'; urlInput.placeholder = 'https://api.example.com/v1/resource'; }, 900);
-    }
-
-    $('newReqBtn').onclick = () => {
-      current = blankRequest();
-      activeIndex = -1;
-      loadCurrentIntoForm();
-      clearResponse();
-      renderHistory();
-    };
-
-    // ----- Send -----
-    $('sendBtn').onclick = sendRequest;
-    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendRequest(); });
-
-    async function sendRequest() {
-      syncUrlFromParams();
-      if (!current.url) { flashUrl(); return; }
-      let finalUrl = current.url;
-      if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
-
-      const headers = {};
-      current.headers.filter(h => h.on && h.k).forEach(h => headers[h.k] = h.v);
-
-      if (current.auth.type === 'bearer' && current.auth.token) {
-        headers['Authorization'] = 'Bearer ' + current.auth.token;
-      } else if (current.auth.type === 'basic' && (current.auth.user || current.auth.pass)) {
-        headers['Authorization'] = 'Basic ' + btoa(current.auth.user + ':' + current.auth.pass);
-      } else if (current.auth.type === 'apikey' && current.auth.key) {
-        headers[current.auth.key] = current.auth.value;
-      }
-
-      let bodyToSend;
-      const method = current.method;
-      const canHaveBody = !['GET', 'HEAD'].includes(method);
-      if (canHaveBody && current.bodyType !== 'none' && current.body) {
-        if (current.bodyType === 'json') {
-          headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-          bodyToSend = current.body;
-        } else if (current.bodyType === 'text') {
-          headers['Content-Type'] = headers['Content-Type'] || 'text/plain';
-          bodyToSend = current.body;
-        } else if (current.bodyType === 'form') {
-          headers['Content-Type'] = headers['Content-Type'] || 'application/x-www-form-urlencoded';
-          bodyToSend = current.body;
-        }
-      }
-
-      const sendBtn = $('sendBtn');
-      sendBtn.disabled = true; sendBtn.textContent = 'Sending...';
-      statusPill.style.display = 'none';
-      respTime.textContent = '';
-      respSize.textContent = '';
-      respBody.innerHTML = '<div id="respPlaceholder">Loading…</div>';
-
-      const t0 = performance.now();
-      try {
-        const res = await fetch(finalUrl, { method, headers, body: bodyToSend, mode: 'cors' });
-        const elapsed = Math.round(performance.now() - t0);
-        const text = await res.text();
-        lastResponseRaw = text;
-        lastResponseHeaders = [...res.headers.entries()];
-        const size = new Blob([text]).size;
-
-        current.response = {
-          status: res.status,
-          statusText: res.statusText,
-          time: elapsed,
-          size: size,
-          body: text,
-          headers: lastResponseHeaders
-        };
-
-        showStatus(res.status, res.statusText);
-        respTime.textContent = elapsed + ' ms';
-        respSize.textContent = formatBytes(size);
-        renderResponseBody();
-
-        if (activeIndex >= 0 && requests[activeIndex]) {
-          requests[activeIndex].response = JSON.parse(JSON.stringify(current.response));
-          saveToStorage();
-        }
-      } catch (err) {
-        showStatus(0, 'Network Error');
-        respBody.innerHTML = `<div style="color:var(--err)">⚠ ${escapeHtml(err.message)}<br><span class="muted">CORS, unreachable, or invalid URL.</span></div>`;
-        current.response = null;
-      } finally {
-        sendBtn.disabled = false; sendBtn.textContent = 'Send';
-      }
-    }
-
-    function showStatus(code, text) {
-      statusPill.style.display = 'inline-block';
-      statusPill.textContent = code ? `${code} ${text}` : text;
-      statusPill.className = '';
-      if (code >= 200 && code < 300) statusPill.classList.add('s2');
-      else if (code >= 300 && code < 400) statusPill.classList.add('s3');
-      else if (code >= 400 && code < 500) statusPill.classList.add('s4');
-      else statusPill.classList.add('s5');
-    }
-
-    function renderResponseBody() {
-      const box = respBody;
-      if (currentRespTab === 'headers') {
-        if (!lastResponseHeaders || lastResponseHeaders.length === 0) {
-          box.innerHTML = '<div class="muted">No headers</div>';
-          return;
-        }
-        box.innerHTML = lastResponseHeaders.map(([k, v]) =>
-          `<div><span class="json-key">${escapeHtml(k)}</span>: ${escapeHtml(v)}</div>`
-        ).join('');
-        return;
-      }
-      if (!lastResponseRaw) {
-        box.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
-        return;
-      }
-      try {
-        const obj = JSON.parse(lastResponseRaw);
-        box.innerHTML = syntaxHighlight(JSON.stringify(obj, null, 2));
-      } catch (_) {
-        box.textContent = lastResponseRaw;
-      }
-    }
-
-    function syntaxHighlight(json) {
-      json = escapeHtml(json);
-      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|null|-?\d+(\.\d+)?([eE][+-]?\d+)?)/g, match => {
-        let cls = 'json-num';
-        if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
-        else if (/true|false/.test(match)) cls = 'json-bool';
-        else if (/null/.test(match)) cls = 'json-null';
-        return `<span class="${cls}">${match}</span>`;
-      });
-    }
-
-    copyBtn.onclick = () => {
-      navigator.clipboard.writeText(lastResponseRaw || '').then(() => {
-        const orig = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => copyBtn.textContent = orig, 1200);
-      });
-    };
-
-    // ----- EXPORT: AI-friendly JSON -----
-    function generateAIExport() {
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        totalRequests: requests.length,
-        requests: requests.map(r => {
-          const clean = {
-            id: r.id,
-            name: r.name || 'Untitled',
-            method: r.method,
-            url: r.url,
-            params: r.params.filter(p => p.on && p.k).map(p => ({ key: p.k, value: p.v })),
-            headers: r.headers.filter(h => h.on && h.k).map(h => ({ key: h.k, value: h.v })),
-            auth: {
-              type: r.auth.type,
-              ...(r.auth.type === 'bearer' ? { token: r.auth.token || '' } : {}),
-              ...(r.auth.type === 'basic' ? { username: r.auth.user || '', password: r.auth.pass || '' } : {}),
-              ...(r.auth.type === 'apikey' ? { headerName: r.auth.key || 'x-api-key', value: r.auth.value || '' } : {})
-            },
-            body: {
-              type: r.bodyType || 'none',
-              content: r.body || ''
-            },
-            hasResponse: !!r.response,
-            response: r.response ? {
-              status: r.response.status,
-              statusText: r.response.statusText,
-              timeMs: r.response.time,
-              sizeBytes: r.response.size,
-              body: r.response.body,
-              headers: r.response.headers ? Object.fromEntries(r.response.headers) : {}
-            } : null
-          };
-          return clean;
-        })
-      };
-      return JSON.stringify(exportData, null, 2);
-    }
-
-    function openExportModal() {
-      const json = generateAIExport();
-      exportText.value = json;
-      exportModal.classList.add('open');
-    }
-
-    function closeExportModal() {
-      exportModal.classList.remove('open');
-    }
-
-    document.getElementById('exportBtn').addEventListener('click', openExportModal);
-    document.getElementById('closeExportBtn').addEventListener('click', closeExportModal);
-    exportModal.addEventListener('click', (e) => {
-      if (e.target === exportModal) closeExportModal();
-    });
-
-    document.getElementById('copyExportBtn').addEventListener('click', () => {
-      navigator.clipboard.writeText(exportText.value).then(() => {
-        const btn = document.getElementById('copyExportBtn');
-        const orig = btn.textContent;
-        btn.textContent = '✅ Copied!';
-        setTimeout(() => btn.textContent = orig, 1500);
-      });
-    });
-
-    document.getElementById('downloadExportBtn').addEventListener('click', () => {
-      const blob = new Blob([exportText.value], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `api-export-${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && exportModal.classList.contains('open')) {
-        closeExportModal();
-      }
-    });
-
-    // ----- INIT -----
-    const hasData = loadFromStorage();
-    if (hasData && requests.length > 0) {
-      activeIndex = 0;
-      current = JSON.parse(JSON.stringify(requests[0]));
-      if (requests[0].response) current.response = JSON.parse(JSON.stringify(requests[0].response));
-    } else {
-      const example = blankRequest('Example GET');
-      example.url = 'https://jsonplaceholder.typicode.com/posts/1';
-      example.method = 'GET';
-      requests = [example];
-      activeIndex = 0;
-      current = JSON.parse(JSON.stringify(example));
-      saveToStorage();
-    }
-    loadCurrentIntoForm();
-    renderHistory();
-  })();
+    })();
 </script>
 </body>
 </html>
