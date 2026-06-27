@@ -1,737 +1,397 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Tester · Collections + Import/Export</title>
+    <title>API Tester Pro · Collections + Variables</title>
     <style>
         /* ----- theme variables (default dark) ----- */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --bg: #0f1117;
-            --panel: #161924;
-            --panel2: #1d2230;
-            --border: #2a3041;
-            --text: #e6e8ee;
-            --muted: #8a8fa3;
-            --accent: #5b8cff;
-            --accent2: #3ddc97;
-            --warn: #ffb454;
-            --err: #ff5c6c;
+            --bg: #0f1117; --panel: #161924; --panel2: #1d2230; --border: #2a3041;
+            --text: #e6e8ee; --muted: #8a8fa3; --accent: #5b8cff; --accent2: #3ddc97;
+            --warn: #ffb454; --err: #ff5c6c; --success: #3ddc97;
             --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-            --shadow: 0 2px 8px rgba(0,0,0,0.4);
-            --input-bg: #1d2230;
-            --input-border: #2a3041;
-            --badge-bg: #5b8cff;
-            --badge-text: #fff;
-            --copy-bg: #1d2230;
-            --copy-border: #2a3041;
-            --hover-bg: #1d2230;
-            --active-outline: #5b8cff;
-            --collection-color: #5b8cff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.5); --radius: 8px;
+            --input-bg: #1d2230; --input-border: #2a3041;
+            --hover-bg: #252a3a; --active-outline: #5b8cff;
         }
-        /* light theme */
         [data-theme="light"] {
-            --bg: #f0f2f8;
-            --panel: #ffffff;
-            --panel2: #e9ecf3;
-            --border: #c6cdde;
-            --text: #1e2330;
-            --muted: #5a627a;
-            --accent: #3b6eff;
-            --accent2: #1ea87a;
-            --warn: #b8860b;
-            --err: #d13a4a;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --input-bg: #ffffff;
-            --input-border: #c6cdde;
-            --badge-bg: #3b6eff;
-            --badge-text: #ffffff;
-            --copy-bg: #e9ecf3;
-            --copy-border: #c6cdde;
-            --hover-bg: #e9ecf3;
-            --active-outline: #3b6eff;
-            --collection-color: #3b6eff;
+            --bg: #f4f6fa; --panel: #ffffff; --panel2: #f0f2f7; --border: #e1e5eb;
+            --text: #1e2330; --muted: #5a627a; --accent: #3b6eff; --accent2: #1ea87a;
+            --warn: #d97706; --err: #dc2626; --success: #16a34a;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --input-bg: #ffffff; --input-border: #d1d5db;
+            --hover-bg: #f3f4f6; --active-outline: #3b6eff;
         }
 
         body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: Inter, Segoe UI, Arial, sans-serif;
-            height: 100vh;
-            overflow: hidden;
-            margin: 0;
-            transition: background 0.2s, color 0.2s;
+            background: var(--bg); color: var(--text);
+            font-family: Inter, -apple-system, Segoe UI, Arial, sans-serif;
+            height: 100vh; overflow: hidden; margin: 0;
+            transition: background 0.3s, color 0.3s;
         }
-        #app {
-            display: flex;
-            height: 100vh;
-        }
+        #app { display: flex; height: 100vh; }
 
-        /* sidebar */
+        /* ----- SIDEBAR ----- */
         #sidebar {
-            width: 280px;
-            background: var(--panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            transition: background 0.2s, border-color 0.2s;
+            width: 300px; background: var(--panel); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; flex-shrink: 0;
+            transition: background 0.3s, border-color 0.3s;
         }
-        #sidebar h1 {
-            font-size: 14px;
-            padding: 14px;
-            margin: 0;
-            border-bottom: 1px solid var(--border);
-            color: var(--accent);
-            letter-spacing: 0.3px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            transition: border-color 0.2s;
+        .sidebar-header {
+            padding: 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
         }
-        #headerActions {
-            display: flex;
-            gap: 6px;
-            align-items: center;
+        .sidebar-header h1 { font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .header-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            background: var(--panel2); border: 1px solid var(--border); color: var(--muted);
+            width: 32px; height: 32px; border-radius: 6px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            transition: all 0.2s;
         }
-        #themeToggle, #exportBtn, #importBtn {
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 20px;
-            padding: 3px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.15s;
+        .icon-btn:hover { background: var(--hover-bg); color: var(--text); border-color: var(--accent); }
+
+        .sidebar-search {
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
         }
-        #themeToggle:hover, #exportBtn:hover, #importBtn:hover {
-            background: var(--border);
+        .sidebar-search input {
+            width: 100%; background: var(--input-bg); border: 1px solid var(--input-border);
+            color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px;
+            outline: none; transition: border-color 0.2s;
         }
-        #exportBtn, #importBtn {
-            border-radius: 6px;
-            font-weight: 600;
-            padding: 3px 10px;
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
+        .sidebar-search input:focus { border-color: var(--accent); }
+
+        .sidebar-actions { padding: 12px 16px; display: flex; gap: 8px; }
+        .btn-primary {
+            flex: 1; background: var(--accent); color: white; border: none;
+            padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer;
+            font-size: 13px; transition: opacity 0.2s;
         }
-        #exportBtn:hover, #importBtn:hover {
-            opacity: 0.85;
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            flex: 1; background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+            padding: 8px; border-radius: 6px; font-weight: 500; cursor: pointer;
+            font-size: 13px; transition: all 0.2s;
         }
-        #newReqBtn, #newCollectionBtn {
-            margin: 6px 10px;
-            padding: 8px;
-            background: var(--accent);
-            border: none;
-            color: #fff;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.1s;
-        }
-        #newReqBtn:hover, #newCollectionBtn:hover { opacity: 0.85; }
-        #newCollectionBtn {
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-size: 12px;
-            padding: 6px;
-        }
-        #history {
-            flex: 1;
-            overflow-y: auto;
-            padding: 6px 8px;
-        }
+        .btn-secondary:hover { background: var(--hover-bg); border-color: var(--accent); }
+
+        #history { flex: 1; overflow-y: auto; padding: 8px; }
+        
         .collection-header {
-            display: flex;
-            align-items: center;
-            padding: 6px 10px;
-            margin-top: 6px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--collection-color);
-            transition: 0.1s;
-            gap: 6px;
+            display: flex; align-items: center; padding: 8px 10px; margin-bottom: 4px;
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;
+            color: var(--text); transition: background 0.2s; gap: 8px;
         }
-        .collection-header:hover {
-            background: var(--hover-bg);
+        .collection-header:hover { background: var(--hover-bg); }
+        .collapse-icon { font-size: 10px; transition: transform 0.2s; color: var(--muted); }
+        .collapse-icon.collapsed { transform: rotate(-90deg); }
+        .col-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .col-count { font-size: 11px; color: var(--muted); font-weight: normal; }
+        
+        .col-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
+        .collection-header:hover .col-actions { opacity: 1; }
+        .col-actions button {
+            background: transparent; border: none; color: var(--muted); cursor: pointer;
+            font-size: 12px; padding: 4px; border-radius: 4px;
         }
-        .collection-header .collapse-icon {
-            font-size: 10px;
-            transition: transform 0.2s;
-            display: inline-block;
-        }
-        .collection-header .collapse-icon.collapsed {
-            transform: rotate(-90deg);
-        }
-        .collection-actions {
-            margin-left: auto;
-            display: flex;
-            gap: 4px;
-        }
-        .collection-actions button {
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            transition: 0.1s;
-        }
-        .collection-actions button:hover {
-            background: var(--border);
-            color: var(--text);
-        }
-        .collection-actions .del-col:hover {
-            background: var(--err);
-            color: #fff;
-        }
+        .col-actions button:hover { background: var(--border); color: var(--text); }
+        .col-actions .del-col:hover { background: var(--err); color: white; }
+
         .collection-items {
-            padding-left: 12px;
-            border-left: 2px solid var(--border);
-            margin-left: 6px;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+            padding-left: 16px; border-left: 2px solid var(--border); margin-left: 12px;
+            margin-bottom: 8px; overflow: hidden; transition: max-height 0.3s ease;
         }
-        .collection-items.collapsed {
-            max-height: 0 !important;
-            padding: 0;
-            margin: 0;
-            border-left: none;
-        }
+        .collection-items.collapsed { max-height: 0 !important; margin: 0; border: none; }
+
         .hist-item {
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 2px;
-            transition: background 0.1s;
-            position: relative;
+            padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+            transition: background 0.1s; position: relative;
         }
         .hist-item:hover { background: var(--hover-bg); }
-        .hist-item.active {
-            background: var(--hover-bg);
-            outline: 1px solid var(--active-outline);
-        }
+        .hist-item.active { background: var(--hover-bg); outline: 1px solid var(--active-outline); }
+        
         .hist-method {
-            font-weight: 700;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            min-width: 44px;
-            text-align: center;
-            flex-shrink: 0;
+            font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px;
+            min-width: 44px; text-align: center; flex-shrink: 0;
         }
-        .m-GET { background: #1c3a2e; color: #3ddc97; }
-        .m-POST { background: #3a2f1c; color: #ffb454; }
-        .m-PUT { background: #1c2c3a; color: #5b8cff; }
-        .m-PATCH { background: #2c1c3a; color: #c08cff; }
-        .m-DELETE { background: #3a1c1c; color: #ff5c6c; }
+        .m-GET { background: rgba(61, 220, 151, 0.15); color: #3ddc97; }
+        .m-POST { background: rgba(255, 180, 84, 0.15); color: #ffb454; }
+        .m-PUT { background: rgba(91, 140, 255, 0.15); color: #5b8cff; }
+        .m-PATCH { background: rgba(192, 140, 255, 0.15); color: #c08cff; }
+        .m-DELETE { background: rgba(255, 92, 108, 0.15); color: #ff5c6c; }
+        [data-theme="light"] .m-GET { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+        [data-theme="light"] .m-POST { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+        [data-theme="light"] .m-PUT { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        [data-theme="light"] .m-PATCH { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
+        [data-theme="light"] .m-DELETE { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
 
-        .hist-url {
-            color: var(--muted);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            flex: 1;
+        .hist-url { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+        
+        .hist-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.2s; }
+        .hist-item:hover .hist-actions { opacity: 1; }
+        .hist-actions button {
+            background: transparent; border: none; color: var(--muted); font-size: 11px;
+            cursor: pointer; padding: 2px 5px; border-radius: 4px;
         }
-        .hist-actions {
-            display: flex;
-            gap: 2px;
-            flex-shrink: 0;
-        }
-        .hist-rename, .hist-delete, .hist-move {
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            font-size: 11px;
-            cursor: pointer;
-            padding: 2px 5px;
-            border-radius: 4px;
-            transition: 0.1s;
-        }
-        .hist-rename:hover {
-            background: var(--border);
-            color: var(--text);
-        }
-        .hist-delete:hover {
-            background: var(--err);
-            color: #fff;
-        }
-        .hist-move:hover {
-            background: var(--accent);
-            color: #fff;
-        }
+        .hist-actions button:hover { background: var(--border); color: var(--text); }
+        .hist-delete:hover { background: var(--err) !important; color: white !important; }
 
-        /* main */
-        #main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
+        /* ----- MAIN AREA ----- */
+        #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        
         #bar {
-            display: flex;
-            gap: 8px;
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border);
-            background: var(--panel);
-            flex-wrap: wrap;
-            align-items: center;
-            transition: background 0.2s, border-color 0.2s;
+            display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border);
+            background: var(--panel); align-items: center; transition: all 0.3s;
         }
         #method {
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 6px;
-            padding: 8px;
-            font-weight: 700;
-            font-size: 12px;
-            transition: background 0.2s, border-color 0.2s;
+            background: var(--input-bg); color: var(--text); border: 1px solid var(--input-border);
+            border-radius: 6px; padding: 10px; font-weight: 700; font-size: 13px; width: 100px;
         }
         #url {
-            flex: 1;
-            min-width: 180px;
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 6px;
-            padding: 8px 10px;
-            font-family: var(--mono);
-            font-size: 13px;
-            transition: background 0.2s, border-color 0.2s;
+            flex: 1; background: var(--input-bg); color: var(--text); border: 1px solid var(--input-border);
+            border-radius: 6px; padding: 10px 14px; font-family: var(--mono); font-size: 14px;
         }
+        #url:focus, #method:focus { outline: none; border-color: var(--accent); }
+        
+        .env-select-wrap { display: flex; align-items: center; gap: 8px; }
+        .env-select-wrap label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+        #envSelect {
+            background: var(--input-bg); color: var(--text); border: 1px solid var(--input-border);
+            border-radius: 6px; padding: 8px; font-size: 12px; max-width: 150px;
+        }
+        .manage-env-btn {
+            background: var(--panel2); border: 1px solid var(--border); color: var(--muted);
+            padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px;
+        }
+        .manage-env-btn:hover { color: var(--accent); border-color: var(--accent); }
+
         #sendBtn {
-            background: var(--accent2);
-            color: #06251a;
-            border: none;
-            padding: 8px 22px;
-            border-radius: 6px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
+            background: var(--accent2); color: #06251a; border: none; padding: 10px 24px;
+            border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px;
+            transition: transform 0.1s, opacity 0.2s;
         }
-        #sendBtn:disabled { opacity: 0.6; cursor: default; }
-        #saveBtn {
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        #saveBtn:hover { background: var(--border); }
+        #sendBtn:hover { opacity: 0.9; }
+        #sendBtn:active { transform: scale(0.98); }
+        #sendBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         #tabs {
-            display: flex;
-            gap: 2px;
-            padding: 0 12px;
-            border-bottom: 1px solid var(--border);
+            display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border);
             background: var(--panel);
-            transition: background 0.2s, border-color 0.2s;
         }
         .tab {
-            padding: 9px 14px;
-            cursor: pointer;
-            font-size: 12px;
-            color: var(--muted);
-            border-bottom: 2px solid transparent;
-            transition: 0.1s;
+            padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--muted);
+            border-bottom: 2px solid transparent; transition: all 0.2s; font-weight: 500;
         }
-        .tab.active {
-            color: var(--text);
-            border-color: var(--accent);
-        }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--accent); border-color: var(--accent); }
         .badge {
-            background: var(--badge-bg);
-            color: var(--badge-text);
-            border-radius: 8px;
-            font-size: 10px;
-            padding: 1px 6px;
-            margin-left: 5px;
+            background: var(--accent); color: white; border-radius: 10px; font-size: 10px;
+            padding: 1px 6px; margin-left: 6px; font-weight: normal;
         }
 
-        #panes {
-            flex: 1;
-            overflow: auto;
-            padding: 14px;
-            background: var(--bg);
-            transition: background 0.2s;
-        }
-        .pane { display: none; }
+        #panes { flex: 1; overflow: auto; padding: 20px; background: var(--bg); }
+        .pane { display: none; animation: fadeIn 0.2s ease; }
         .pane.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
-        table.kv {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table.kv td { padding: 4px; }
+        table.kv { width: 100%; border-collapse: collapse; }
+        table.kv td { padding: 6px 4px; }
         table.kv input[type="text"] {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text);
-            border-radius: 5px;
-            padding: 6px 8px;
-            font-family: var(--mono);
-            font-size: 12px;
-            transition: background 0.2s, border-color 0.2s;
+            width: 100%; background: var(--input-bg); border: 1px solid var(--input-border);
+            color: var(--text); border-radius: 6px; padding: 8px 12px; font-family: var(--mono); font-size: 13px;
         }
-        table.kv input[type="checkbox"] {
-            transform: scale(1.1);
-            accent-color: var(--accent);
+        table.kv input[type="checkbox"] { transform: scale(1.2); accent-color: var(--accent); cursor: pointer; }
+        .rowBtn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 4px; }
+        .rowBtn:hover { background: var(--err); color: white; }
+        
+        .add-row-btn {
+            margin-top: 12px; background: var(--panel2); border: 1px dashed var(--border);
+            color: var(--muted); padding: 8px 16px; border-radius: 6px; cursor: pointer;
+            font-size: 13px; width: 100%; transition: all 0.2s;
         }
-        .rowBtn {
-            background: none;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .rowBtn:hover { color: var(--err); }
-        #addHeaderBtn, #addParamBtn {
-            margin-top: 6px;
-            background: var(--panel2);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            padding: 5px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        #addHeaderBtn:hover, #addParamBtn:hover {
-            background: var(--border);
-        }
+        .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--hover-bg); }
 
-        #bodyTypeSel {
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            padding: 5px;
-            font-size: 12px;
-            transition: background 0.2s, border-color 0.2s;
-        }
         textarea#bodyText {
-            width: 100%;
-            height: 200px;
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 6px;
-            padding: 10px;
-            font-family: var(--mono);
-            font-size: 12.5px;
-            resize: vertical;
-            margin-top: 6px;
-            transition: background 0.2s, border-color 0.2s;
+            width: 100%; height: 250px; background: var(--input-bg); color: var(--text);
+            border: 1px solid var(--input-border); border-radius: 6px; padding: 12px;
+            font-family: var(--mono); font-size: 13px; resize: vertical; margin-top: 10px;
+            line-height: 1.5;
         }
+        .smallnote { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
 
-        #authType {
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 5px;
-            padding: 6px;
-            margin-bottom: 10px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .auth-field { margin-bottom: 8px; }
-        .auth-field label {
-            display: block;
-            font-size: 11px;
-            color: var(--muted);
-            margin-bottom: 3px;
-        }
-        .auth-field input {
-            width: 100%;
-            max-width: 380px;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text);
-            border-radius: 5px;
-            padding: 7px 9px;
-            font-family: var(--mono);
-            font-size: 12px;
-            transition: background 0.2s, border-color 0.2s;
-        }
-
-        /* response */
+        /* ----- RESPONSE ----- */
         #responseWrap {
-            border-top: 1px solid var(--border);
-            height: 42%;
-            display: flex;
-            flex-direction: column;
-            background: var(--panel);
-            min-height: 140px;
-            transition: background 0.2s, border-color 0.2s;
+            border-top: 1px solid var(--border); height: 40%; display: flex; flex-direction: column;
+            background: var(--panel); min-height: 150px;
         }
         #respHeader {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 6px 14px;
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-            flex-wrap: wrap;
-            transition: border-color 0.2s;
+            display: flex; align-items: center; gap: 16px; padding: 8px 16px;
+            border-bottom: 1px solid var(--border); font-size: 13px;
         }
-        #statusPill {
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 5px;
-            display: none;
-        }
-        .s2 { background: #1c3a2e; color: #3ddc97; }
-        .s3 { background: #2c2c1c; color: #ffe17a; }
-        .s4 { background: #3a2f1c; color: #ffb454; }
-        .s5 { background: #3a1c1c; color: #ff5c6c; }
+        #statusPill { font-weight: 700; padding: 4px 12px; border-radius: 20px; display: none; font-size: 12px; }
+        .s2 { background: rgba(61, 220, 151, 0.15); color: #3ddc97; }
+        .s3 { background: rgba(255, 225, 122, 0.15); color: #ffe17a; }
+        .s4 { background: rgba(255, 180, 84, 0.15); color: #ffb454; }
+        .s5 { background: rgba(255, 92, 108, 0.15); color: #ff5c6c; }
+        [data-theme="light"] .s2 { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+        [data-theme="light"] .s3 { background: rgba(202, 138, 4, 0.1); color: #ca8a04; }
+        [data-theme="light"] .s4 { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+        [data-theme="light"] .s5 { background: rgba(220, 38, 38, 0.1); color: #dc2626; }
 
-        #respTabs {
-            display: flex;
-            gap: 14px;
-        }
-        #respTabs span {
-            cursor: pointer;
-            color: var(--muted);
-            font-size: 12px;
-            padding: 4px 0;
-            border-bottom: 2px solid transparent;
-        }
-        #respTabs span.active {
-            color: var(--text);
-            border-color: var(--accent);
-        }
+        #respTabs { display: flex; gap: 16px; margin-left: auto; }
+        #respTabs span { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; border-bottom: 2px solid transparent; }
+        #respTabs span.active { color: var(--text); border-color: var(--accent); }
+        
         #respBody {
-            flex: 1;
-            overflow: auto;
-            padding: 12px 14px;
-            font-family: var(--mono);
-            font-size: 12.5px;
-            white-space: pre-wrap;
-            word-break: break-word;
+            flex: 1; overflow: auto; padding: 16px; font-family: var(--mono); font-size: 13px;
+            white-space: pre-wrap; word-break: break-word; line-height: 1.5;
         }
-        #respPlaceholder {
-            color: var(--muted);
-            padding: 20px 0;
-            text-align: center;
-            font-size: 13px;
-        }
-        .json-key { color: #7fb9ff; }
-        .json-str { color: #3ddc97; }
-        .json-num { color: #ffb454; }
-        .json-bool { color: #c08cff; }
-        .json-null { color: #ff5c6c; }
+        #respPlaceholder { color: var(--muted); padding: 40px 0; text-align: center; font-size: 14px; }
+        
+        .json-key { color: #7fb9ff; } .json-str { color: #3ddc97; }
+        .json-num { color: #ffb454; } .json-bool { color: #c08cff; } .json-null { color: #ff5c6c; }
+        [data-theme="light"] .json-key { color: #0550ae; } [data-theme="light"] .json-str { color: #0a3069; }
+        [data-theme="light"] .json-num { color: #0550ae; } [data-theme="light"] .json-bool { color: #8250df; }
+        [data-theme="light"] .json-null { color: #cf222e; }
 
-        .muted { color: var(--muted); }
-        .smallnote {
-            font-size: 11px;
-            color: var(--muted);
-            margin: 6px 0 10px;
-        }
-        .copyBtn {
-            background: var(--copy-bg);
-            border: 1px solid var(--copy-border);
-            color: var(--muted);
-            font-size: 11px;
-            padding: 3px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-left: auto;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .copyBtn:hover {
-            background: var(--border);
-            color: var(--text);
-        }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-
-        /* modals */
+        /* ----- MODALS ----- */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+            backdrop-filter: blur(4px); animation: fadeIn 0.2s;
         }
         .modal-overlay.open { display: flex; }
         .modal-box {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 700px;
-            width: 90%;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow);
+            background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+            padding: 24px; max-width: 800px; width: 95%; max-height: 85vh;
+            display: flex; flex-direction: column; box-shadow: var(--shadow);
+            animation: slideUp 0.3s ease;
         }
-        .modal-box h2 {
-            color: var(--accent);
-            margin-bottom: 8px;
-            font-size: 18px;
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h2 { color: var(--text); font-size: 20px; }
+        .modal-close { background: none; border: none; color: var(--muted); font-size: 24px; cursor: pointer; }
+        .modal-close:hover { color: var(--err); }
+        
+        .modal-body { flex: 1; overflow-y: auto; margin-bottom: 20px; }
+        .modal-footer { display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 16px; }
+        
+        .btn {
+            padding: 10px 20px; border-radius: 6px; border: 1px solid var(--border);
+            background: var(--panel2); color: var(--text); cursor: pointer; font-size: 14px;
+            font-weight: 500; transition: all 0.2s;
         }
-        .modal-box p {
-            color: var(--muted);
-            font-size: 13px;
-            margin-bottom: 12px;
-        }
-        .modal-box textarea {
-            flex: 1;
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--input-border);
-            border-radius: 6px;
-            padding: 12px;
-            font-family: var(--mono);
-            font-size: 12px;
-            min-height: 200px;
-            resize: vertical;
-            transition: background 0.2s, border-color 0.2s;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-            justify-content: flex-end;
-        }
-        .modal-actions button {
-            padding: 8px 18px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--panel2);
-            color: var(--text);
-            cursor: pointer;
-            font-size: 13px;
-            transition: 0.15s;
-        }
-        .modal-actions button.primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-        .modal-actions button:hover {
-            opacity: 0.85;
+        .btn:hover { background: var(--hover-bg); }
+        .btn-accent { background: var(--accent); border-color: var(--accent); color: white; }
+        .btn-accent:hover { opacity: 0.9; background: var(--accent); }
+        .btn-danger { background: var(--err); border-color: var(--err); color: white; }
+        .btn-danger:hover { opacity: 0.9; background: var(--err); }
+
+        /* Import/Export Specific */
+        .io-section { margin-bottom: 24px; }
+        .io-section h3 { font-size: 16px; margin-bottom: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .io-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+        .io-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 4px; cursor: pointer; }
+        .io-item:hover { background: var(--hover-bg); }
+        .io-item input { accent-color: var(--accent); transform: scale(1.2); }
+        .io-item label { flex: 1; cursor: pointer; font-size: 14px; }
+        .io-item .count { font-size: 12px; color: var(--muted); }
+        
+        .io-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+        .io-actions button { font-size: 12px; padding: 6px 12px; }
+
+        textarea.io-textarea {
+            width: 100%; height: 150px; background: var(--input-bg); color: var(--text);
+            border: 1px solid var(--input-border); border-radius: 6px; padding: 12px;
+            font-family: var(--mono); font-size: 12px; resize: vertical;
         }
 
-        /* confirm dialog */
-        .confirm-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(3px);
+        /* Environment Manager */
+        .env-manager { display: flex; gap: 20px; height: 400px; }
+        .env-list { width: 200px; border-right: 1px solid var(--border); padding-right: 20px; display: flex; flex-direction: column; }
+        .env-list-items { flex: 1; overflow-y: auto; margin-bottom: 10px; }
+        .env-list-item {
+            padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
         }
-        .confirm-overlay.open { display: flex; }
-        .confirm-box {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 28px 32px;
-            max-width: 420px;
-            width: 90%;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            text-align: center;
+        .env-list-item:hover { background: var(--hover-bg); }
+        .env-list-item.active { background: var(--accent); color: white; }
+        .env-list-item .del-env { opacity: 0; font-size: 12px; }
+        .env-list-item:hover .del-env { opacity: 1; }
+        .env-list-item.active .del-env { color: rgba(255,255,255,0.7); }
+        
+        .env-details { flex: 1; display: flex; flex-direction: column; }
+        .env-details h3 { margin-bottom: 10px; }
+        .env-vars-table { flex: 1; overflow-y: auto; }
+
+        /* Toasts */
+        #toast-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 2000;
+            display: flex; flex-direction: column; gap: 10px;
         }
-        .confirm-box h3 {
-            color: var(--err);
-            font-size: 18px;
-            margin-bottom: 8px;
+        .toast {
+            background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px 20px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px;
+            min-width: 250px; animation: slideIn 0.3s ease; font-size: 14px;
         }
-        .confirm-box p {
-            color: var(--text);
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-        .confirm-box .highlight {
-            color: var(--accent);
-            font-weight: 600;
-            word-break: break-word;
-        }
-        .confirm-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-        .confirm-actions button {
-            padding: 8px 28px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--panel2);
-            color: var(--text);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: 0.15s;
-        }
-        .confirm-actions button:hover { opacity: 0.85; }
-        .confirm-actions .btn-danger {
-            background: var(--err);
-            border-color: var(--err);
-            color: #fff;
-        }
-        .confirm-actions .btn-cancel {
-            background: var(--panel2);
-            border-color: var(--border);
-            color: var(--text);
-        }
-        .confirm-actions .btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--err); }
+        .toast.info { border-left: 4px solid var(--accent); }
+        .toast-icon { font-size: 18px; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+        ::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
 <body>
 <div id="app">
+    <!-- SIDEBAR -->
     <div id="sidebar">
-        <h1>
-            <span>⚡</span> API TESTER
-            <span id="headerActions">
-                <button id="importBtn" title="Import collections">📥 Import</button>
-                <button id="exportBtn" title="Export all collections">📤 Export</button>
-                <button id="themeToggle" title="Toggle light/dark">🌓</button>
-            </span>
-        </h1>
-        <button id="newCollectionBtn">＋ New Collection</button>
-        <button id="newReqBtn">＋ New Request</button>
+        <div class="sidebar-header">
+            <h1>⚡ API Tester</h1>
+            <div class="header-actions">
+                <button class="icon-btn" id="importBtn" title="Import">📥</button>
+                <button class="icon-btn" id="exportBtn" title="Export">📤</button>
+                <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓</button>
+            </div>
+        </div>
+        
+        <div class="sidebar-search">
+            <input type="text" id="searchInput" placeholder="Search requests...">
+        </div>
+
+        <div class="sidebar-actions">
+            <button class="btn-secondary" id="newCollectionBtn">+ Collection</button>
+            <button class="btn-primary" id="newReqBtn">+ Request</button>
+        </div>
+
         <div id="history"></div>
     </div>
 
+    <!-- MAIN -->
     <div id="main">
         <div id="bar">
-            <select id="method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option></select>
-            <input id="url" type="text" placeholder="https://api.example.com/v1/resource" />
+            <select id="method">
+                <option>GET</option><option>POST</option><option>PUT</option>
+                <option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option>
+            </select>
+            <input id="url" type="text" placeholder="https://api.example.com/v1/resource (use {{vars}})" />
+            
+            <div class="env-select-wrap">
+                <label>Env:</label>
+                <select id="envSelect"></select>
+                <button class="manage-env-btn" id="manageEnvBtn" title="Manage Environments">⚙️</button>
+            </div>
+
             <button id="sendBtn">Send</button>
-            <button id="saveBtn">Save</button>
         </div>
 
         <div id="tabs">
@@ -744,19 +404,29 @@
         <div id="panes">
             <div class="pane active" id="pane-params">
                 <table class="kv" id="paramsTable"></table>
-                <button id="addParamBtn">+ Add Param</button>
-                <div class="smallnote">Params are appended to the URL automatically.</div>
+                <button class="add-row-btn" id="addParamBtn">+ Add Param</button>
+                <div class="smallnote">ℹ️ Params are appended to the URL automatically.</div>
             </div>
             <div class="pane" id="pane-headers">
                 <table class="kv" id="headersTable"></table>
-                <button id="addHeaderBtn">+ Add Header</button>
+                <button class="add-row-btn" id="addHeaderBtn">+ Add Header</button>
             </div>
             <div class="pane" id="pane-auth">
-                <select id="authType"><option value="none">No Auth</option><option value="bearer">Bearer Token</option><option value="basic">Basic Auth</option><option value="apikey">API Key (header)</option></select>
+                <select id="authType" style="width: 200px; margin-bottom: 15px; padding: 8px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); border-radius: 6px;">
+                    <option value="none">No Auth</option>
+                    <option value="bearer">Bearer Token</option>
+                    <option value="basic">Basic Auth</option>
+                    <option value="apikey">API Key (Header)</option>
+                </select>
                 <div id="authFields"></div>
             </div>
             <div class="pane" id="pane-body">
-                <select id="bodyTypeSel"><option value="none">none</option><option value="json" selected>JSON</option><option value="text">raw text</option><option value="form">x-www-form-urlencoded</option></select>
+                <select id="bodyTypeSel" style="width: 200px; margin-bottom: 10px; padding: 8px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); border-radius: 6px;">
+                    <option value="none">none</option>
+                    <option value="json" selected>JSON</option>
+                    <option value="text">Raw Text</option>
+                    <option value="form">x-www-form-urlencoded</option>
+                </select>
                 <textarea id="bodyText" placeholder='{\n  "key": "value"\n}'></textarea>
                 <div class="smallnote" id="bodyHint"></div>
             </div>
@@ -765,15 +435,48 @@
         <div id="responseWrap">
             <div id="respHeader">
                 <span id="statusPill"></span>
-                <span id="respTime" class="muted"></span>
-                <span id="respSize" class="muted"></span>
+                <span id="respTime" style="color: var(--muted); font-size: 13px;"></span>
+                <span id="respSize" style="color: var(--muted); font-size: 13px;"></span>
                 <div id="respTabs">
                     <span class="active" data-rt="body">Body</span>
                     <span data-rt="headers">Headers</span>
                 </div>
-                <button class="copyBtn" id="copyRespBtn">Copy</button>
+                <button class="icon-btn" id="copyRespBtn" title="Copy Response" style="width: auto; padding: 4px 12px; font-size: 12px;">Copy</button>
             </div>
             <div id="respBody"><div id="respPlaceholder">Send a request to see the response here.</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS -->
+<!-- Input Modal (Replaces prompt) -->
+<div class="modal-overlay" id="inputModal">
+    <div class="modal-box" style="max-width: 400px;">
+        <div class="modal-header">
+            <h2 id="inputModalTitle">Input</h2>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="inputModalField" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); border-radius: 6px; font-size: 14px;">
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="inputModalCancel">Cancel</button>
+            <button class="btn btn-accent" id="inputModalOk">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header">
+            <h2 id="confirmTitle">Confirm</h2>
+        </div>
+        <div class="modal-body">
+            <p id="confirmMessage" style="font-size: 15px; line-height: 1.5;"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="confirmCancel">Cancel</button>
+            <button class="btn btn-danger" id="confirmOk">Confirm</button>
         </div>
     </div>
 </div>
@@ -781,13 +484,30 @@
 <!-- Export Modal -->
 <div class="modal-overlay" id="exportModal">
     <div class="modal-box">
-        <h2>📤 Export Collections</h2>
-        <p>This JSON export contains all your collections and their requests with configurations and responses.</p>
-        <textarea id="exportText" readonly></textarea>
-        <div class="modal-actions">
-            <button id="copyExportBtn">📋 Copy</button>
-            <button id="closeExportBtn">Close</button>
-            <button class="primary" id="downloadExportBtn">⬇ Download</button>
+        <div class="modal-header">
+            <h2>📤 Export Data</h2>
+            <button class="modal-close" id="closeExportBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="io-section">
+                <h3>Select Collections to Export</h3>
+                <div class="io-actions">
+                    <button class="btn btn-secondary" id="expSelectAll">Select All</button>
+                    <button class="btn btn-secondary" id="expDeselectAll">Deselect All</button>
+                </div>
+                <div class="io-list" id="expCollectionList"></div>
+            </div>
+            <div class="io-section">
+                <h3>Include Environments?</h3>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="expIncludeEnvs" checked style="transform: scale(1.3); accent-color: var(--accent);">
+                    <span>Export all Environment Variables</span>
+                </label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="copyExportBtn">📋 Copy JSON</button>
+            <button class="btn btn-accent" id="downloadExportBtn">⬇ Download File</button>
         </div>
     </div>
 </div>
@@ -795,1067 +515,1124 @@
 <!-- Import Modal -->
 <div class="modal-overlay" id="importModal">
     <div class="modal-box">
-        <h2>📥 Import Collections</h2>
-        <p>Paste your exported JSON data below. You can choose to import all collections or select specific ones.</p>
-        <textarea id="importText" placeholder='Paste your JSON data here...'></textarea>
-        <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <label style="font-size: 13px; color: var(--muted);">
-                <input type="checkbox" id="importAllCheck" checked> Import all collections
-            </label>
-            <span style="font-size: 12px; color: var(--muted);" id="importStatus"></span>
+        <div class="modal-header">
+            <h2>📥 Import Data</h2>
+            <button class="modal-close" id="closeImportBtn">&times;</button>
         </div>
-        <div class="modal-actions">
-            <button id="closeImportBtn">Cancel</button>
-            <button class="primary" id="confirmImportBtn">Import</button>
+        <div class="modal-body">
+            <div class="io-section">
+                <h3>1. Load Data</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button class="btn btn-secondary" id="importFileBtn">📁 Upload File</button>
+                    <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                    <button class="btn btn-secondary" id="importPasteBtn">Paste JSON</button>
+                </div>
+                <textarea class="io-textarea" id="importTextarea" placeholder="Paste your exported JSON here or upload a file..."></textarea>
+            </div>
+            
+            <div class="io-section" id="importSelectionArea" style="display: none;">
+                <h3>2. Select Items to Import</h3>
+                <div class="io-actions">
+                    <button class="btn btn-secondary" id="impSelectAll">Select All</button>
+                    <button class="btn btn-secondary" id="impDeselectAll">Deselect All</button>
+                </div>
+                <div id="impCollectionsWrap" style="margin-bottom: 15px;">
+                    <h4 style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Collections</h4>
+                    <div class="io-list" id="impCollectionList"></div>
+                </div>
+                <div id="impEnvsWrap">
+                    <h4 style="font-size: 14px; color: var(--muted); margin-bottom: 8px;">Environments</h4>
+                    <div class="io-list" id="impEnvList"></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelImportBtn">Cancel</button>
+            <button class="btn btn-accent" id="confirmImportBtn" disabled>Import Selected</button>
         </div>
     </div>
 </div>
 
-<!-- Custom Confirm Dialog -->
-<div class="confirm-overlay" id="confirmDialog">
-    <div class="confirm-box">
-        <h3 id="confirmTitle">⚠️ Confirm</h3>
-        <p id="confirmMessage">Are you sure?</p>
-        <div class="confirm-actions" id="confirmActions">
-            <button class="btn-cancel" id="confirmCancel">Cancel</button>
-            <button class="btn-danger" id="confirmOk">Confirm</button>
+<!-- Environment Manager Modal -->
+<div class="modal-overlay" id="envModal">
+    <div class="modal-box" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2>⚙️ Manage Environments</h2>
+            <button class="modal-close" id="closeEnvBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="env-manager">
+                <div class="env-list">
+                    <div class="env-list-items" id="envListItems"></div>
+                    <button class="btn btn-secondary" id="addEnvBtn" style="width: 100%;">+ New Environment</button>
+                </div>
+                <div class="env-details">
+                    <h3 id="currentEnvName">Variables</h3>
+                    <div class="smallnote" style="margin-bottom: 10px;">Use these variables in your requests with <code style="background:var(--panel2); padding: 2px 6px; border-radius: 4px;">{{variable_name}}</code></div>
+                    <table class="kv env-vars-table" id="envVarsTable"></table>
+                    <button class="add-row-btn" id="addEnvVarBtn">+ Add Variable</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-accent" id="saveEnvBtn">Save & Close</button>
         </div>
     </div>
 </div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
 
 <script>
-    (function() {
-        // ----- THEME -----
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('apiTesterTheme', theme);
-        }
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme') || 'dark';
-            setTheme(current === 'dark' ? 'light' : 'dark');
-        }
-        const savedTheme = localStorage.getItem('apiTesterTheme') || 'dark';
-        setTheme(savedTheme);
-        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+(function() {
+    // ----- THEME -----
+    const setTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('apiTesterTheme', theme);
+    };
+    const toggleTheme = () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        setTheme(current === 'dark' ? 'light' : 'dark');
+    };
+    setTheme(localStorage.getItem('apiTesterTheme') || 'dark');
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
-        // ----- STATE -----
-        const STORAGE_KEY = 'apiTesterCollections';
-        let collections = []; // [{ id, name, requests: [] }]
-        let activeCollectionId = null;
-        let activeRequestId = null;
-        let lastResponseRaw = '';
-        let lastResponseHeaders = [];
-        let currentRespTab = 'body';
-        let currentRequest = null;
+    // ----- STATE -----
+    const STORAGE_KEY = 'apiTesterDataV2';
+    let state = {
+        collections: [],
+        environments: [{ id: 'global', name: 'Global Variables', variables: [] }],
+        activeEnvId: 'global',
+        activeColId: null,
+        activeReqId: null
+    };
+    
+    let currentRequest = null;
+    let lastResponseRaw = '';
+    let lastResponseHeaders = [];
+    let currentRespTab = 'body';
+    let searchQuery = '';
 
-        function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+    // DOM Refs
+    const $ = id => document.getElementById(id);
+    const methodSel = $('method'), urlInput = $('url');
+    const paramsTable = $('paramsTable'), headersTable = $('headersTable');
+    const bodyTypeSel = $('bodyTypeSel'), bodyText = $('bodyText'), bodyHint = $('bodyHint');
+    const authType = $('authType'), authFields = $('authFields');
+    const historyEl = $('history');
+    const statusPill = $('statusPill');
+    const respTime = $('respTime'), respSize = $('respSize'), respBody = $('respBody');
+    const envSelect = $('envSelect');
 
-        function blankRequest(name = '') {
-            return {
-                id: uid(),
-                name: name || 'Untitled',
-                method: 'GET',
-                url: '',
-                params: [{ k: '', v: '', on: true }],
-                headers: [{ k: '', v: '', on: true }],
-                auth: { type: 'none', token: '', user: '', pass: '', key: '', value: '' },
-                bodyType: 'json',
-                body: '',
-                response: null
-            };
-        }
+    // ----- UTILS -----
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const escapeAttr = s => (s || '').replace(/"/g, '&quot;');
+    const escapeHtml = s => (s + '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const formatBytes = n => { if (n < 1024) return n + ' B'; if (n < 1048576) return (n/1024).toFixed(1)+' KB'; return (n/1048576).toFixed(1)+' MB'; };
 
-        function blankCollection(name = '') {
-            return {
-                id: uid(),
-                name: name || 'New Collection',
-                requests: []
-            };
-        }
+    // ----- TOASTS -----
+    function showToast(message, type = 'info') {
+        const container = $('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+        toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'slideIn 0.3s reverse';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 
-        // ----- persist to localStorage -----
-        function saveToStorage() {
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(collections)); } catch (_) {}
-        }
+    // ----- MODALS (Replacing alert/prompt) -----
+    function showInputModal(title, defaultValue, callback) {
+        const modal = $('inputModal');
+        $('inputModalTitle').textContent = title;
+        const field = $('inputModalField');
+        field.value = defaultValue || '';
+        modal.classList.add('open');
+        setTimeout(() => field.focus(), 100);
 
-        function loadFromStorage() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed) && parsed.length) {
-                        collections = parsed;
-                        collections.forEach(c => {
-                            if (!c.id) c.id = uid();
-                            c.requests.forEach(r => { if (!r.id) r.id = uid(); });
-                        });
-                        return true;
-                    }
-                }
-            } catch (_) {}
-            return false;
-        }
+        const cleanup = () => {
+            modal.classList.remove('open');
+            $('inputModalOk').onclick = null;
+            $('inputModalCancel').onclick = null;
+        };
 
-        // ----- DOM refs -----
-        const $ = id => document.getElementById(id);
-        const methodSel = $('method'), urlInput = $('url');
-        const paramsTable = $('paramsTable'), headersTable = $('headersTable');
-        const bodyTypeSel = $('bodyTypeSel'), bodyText = $('bodyText'), bodyHint = $('bodyHint');
-        const authType = $('authType'), authFields = $('authFields');
-        const historyEl = $('history');
-        const statusPill = $('statusPill');
-        const respTime = $('respTime'), respSize = $('respSize');
-        const respBody = $('respBody');
-        const copyBtn = $('copyRespBtn');
-        const exportModal = $('exportModal');
-        const exportText = $('exportText');
-        const importModal = $('importModal');
-        const importText = $('importText');
-        const importAllCheck = $('importAllCheck');
-        const importStatus = $('importStatus');
-        const confirmDialog = $('confirmDialog');
-        const confirmTitle = $('confirmTitle');
-        const confirmMessage = $('confirmMessage');
-        const confirmOk = $('confirmOk');
-        const confirmCancel = $('confirmCancel');
-        let confirmCallback = null;
+        $('inputModalOk').onclick = () => { cleanup(); callback(field.value); };
+        $('inputModalCancel').onclick = cleanup;
+        field.onkeydown = (e) => { if (e.key === 'Enter') $('inputModalOk').click(); };
+    }
 
-        // ----- helpers -----
-        function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
-        function escapeHtml(s) { return (s + '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-        function formatBytes(n) { if (n < 1024) return n + ' B'; if (n < 1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(1)+' MB'; }
+    function showConfirmModal(title, message, onConfirm) {
+        const modal = $('confirmModal');
+        $('confirmTitle').textContent = title;
+        $('confirmMessage').innerHTML = message;
+        modal.classList.add('open');
 
-        function getCollection(id) { return collections.find(c => c.id === id); }
-        function getRequest(colId, reqId) {
-            const col = getCollection(colId);
-            if (!col) return null;
-            return col.requests.find(r => r.id === reqId) || null;
-        }
+        const cleanup = () => {
+            modal.classList.remove('open');
+            $('confirmOk').onclick = null;
+            $('confirmCancel').onclick = null;
+        };
 
-        // ----- Tabs -----
-        document.querySelectorAll('.tab').forEach(t => {
-            t.onclick = () => {
-                document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-                document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
-                t.classList.add('active');
-                $('pane-' + t.dataset.tab).classList.add('active');
-            };
-        });
-        document.querySelectorAll('#respTabs span').forEach(s => {
-            s.onclick = () => {
-                document.querySelectorAll('#respTabs span').forEach(x => x.classList.remove('active'));
-                s.classList.add('active');
-                currentRespTab = s.dataset.rt;
-                renderResponseBody();
-            };
-        });
+        $('confirmOk').onclick = () => { cleanup(); onConfirm(); };
+        $('confirmCancel').onclick = cleanup;
+    }
 
-        // ----- KV table render -----
-        function renderKVTable(table, list, onChange) {
-            table.innerHTML = '';
-            list.forEach((row, i) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="width:26px"><input type="checkbox" ${row.on ? 'checked' : ''}></td>
-                    <td><input type="text" placeholder="key" value="${escapeAttr(row.k)}"></td>
-                    <td><input type="text" placeholder="value" value="${escapeAttr(row.v)}"></td>
-                    <td style="width:26px"><button class="rowBtn">✕</button></td>
-                `;
-                const [chk, kIn, vIn] = tr.querySelectorAll('input');
-                const del = tr.querySelector('button');
-                chk.onchange = () => { row.on = chk.checked; onChange(); };
-                kIn.oninput = () => { row.k = kIn.value; onChange(); };
-                vIn.oninput = () => { row.v = vIn.value; onChange(); };
-                del.onclick = () => { list.splice(i, 1); renderKVTable(table, list, onChange); onChange(); };
-                table.appendChild(tr);
-            });
-        }
+    // ----- STORAGE -----
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                collections: state.collections,
+                environments: state.environments,
+                activeEnvId: state.activeEnvId
+            }));
+        } catch (e) { console.error('Save failed', e); }
+    }
 
-        function ensureTrailingEmpty(list) {
-            if (list.length === 0 || list[list.length - 1].k !== '' || list[list.length - 1].v !== '') {
-                list.push({ k: '', v: '', on: true });
-            }
-        }
-
-        function renderParams() {
-            if (!currentRequest) return;
-            ensureTrailingEmpty(currentRequest.params);
-            renderKVTable(paramsTable, currentRequest.params, () => {
-                syncUrlFromParams();
-                ensureTrailingEmpty(currentRequest.params);
-                updateBadges();
-            });
-            updateBadges();
-        }
-
-        function renderHeaders() {
-            if (!currentRequest) return;
-            ensureTrailingEmpty(currentRequest.headers);
-            renderKVTable(headersTable, currentRequest.headers, () => {
-                ensureTrailingEmpty(currentRequest.headers);
-                updateBadges();
-            });
-            updateBadges();
-        }
-
-        function updateBadges() {
-            if (!currentRequest) return;
-            const pc = currentRequest.params.filter(p => p.on && p.k).length;
-            const hc = currentRequest.headers.filter(h => h.on && h.k).length;
-            const pcEl = $('paramCount'), hcEl = $('headerCount');
-            pcEl.style.display = pc ? '' : 'none'; pcEl.textContent = pc;
-            hcEl.style.display = hc ? '' : 'none'; hcEl.textContent = hc;
-        }
-
-        $('addParamBtn').onclick = () => { if (currentRequest) { currentRequest.params.push({ k: '', v: '', on: true }); renderParams(); } };
-        $('addHeaderBtn').onclick = () => { if (currentRequest) { currentRequest.headers.push({ k: '', v: '', on: true }); renderHeaders(); } };
-
-        // ----- URL <-> params -----
-        function syncUrlFromParams() {
-            if (!currentRequest) return;
-            const [base] = (currentRequest.url || '').split('?');
-            const active = currentRequest.params.filter(p => p.on && p.k);
-            const qs = active.map(p => encodeURIComponent(p.k) + '=' + encodeURIComponent(p.v)).join('&');
-            currentRequest.url = qs ? base + '?' + qs : base;
-            urlInput.value = currentRequest.url;
-        }
-
-        function syncParamsFromUrl() {
-            if (!currentRequest) return;
-            try {
-                const qIdx = currentRequest.url.indexOf('?');
-                if (qIdx === -1) return;
-                const qs = currentRequest.url.slice(qIdx + 1);
-                const parts = qs.split('&').filter(Boolean);
-                currentRequest.params = parts.map(p => {
-                    const [k, v = ''] = p.split('=');
-                    return { k: decodeURIComponent(k || ''), v: decodeURIComponent(v || ''), on: true };
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const data = JSON.parse(raw);
+                state.collections = data.collections || [];
+                state.environments = data.environments || [{ id: 'global', name: 'Global Variables', variables: [] }];
+                state.activeEnvId = data.activeEnvId || 'global';
+                
+                // Ensure IDs exist
+                state.collections.forEach(c => {
+                    if(!c.id) c.id = uid();
+                    c.requests.forEach(r => { if(!r.id) r.id = uid(); });
                 });
-                if (currentRequest.params.length === 0) currentRequest.params.push({ k: '', v: '', on: true });
-            } catch (_) {}
+                state.environments.forEach(e => { if(!e.id) e.id = uid(); });
+                return true;
+            }
+        } catch (e) { console.error('Load failed', e); }
+        return false;
+    }
+
+    // ----- VARIABLES INTERPOLATION -----
+    function interpolateString(str) {
+        if (!str) return str;
+        const env = state.environments.find(e => e.id === state.activeEnvId);
+        if (!env || !env.variables) return str;
+
+        return str.replace(/\{\{(.*?)\}\}/g, (match, key) => {
+            const cleanKey = key.trim();
+            const variable = env.variables.find(v => v.k === cleanKey);
+            return variable ? variable.v : match;
+        });
+    }
+
+    // ----- ENVIRONMENTS UI -----
+    function renderEnvSelect() {
+        envSelect.innerHTML = '';
+        state.environments.forEach(env => {
+            const opt = document.createElement('option');
+            opt.value = env.id;
+            opt.textContent = env.name;
+            if (env.id === state.activeEnvId) opt.selected = true;
+            envSelect.appendChild(opt);
+        });
+    }
+
+    envSelect.onchange = () => {
+        state.activeEnvId = envSelect.value;
+        saveState();
+        showToast(`Switched to "${envSelect.options[envSelect.selectedIndex].text}"`, 'info');
+    };
+
+    // Env Manager Modal
+    let currentEditingEnvId = null;
+
+    function openEnvManager() {
+        $('envModal').classList.add('open');
+        if (!currentEditingEnvId && state.environments.length > 0) {
+            currentEditingEnvId = state.environments[0].id;
         }
+        renderEnvManagerList();
+        renderEnvManagerDetails();
+    }
 
-        urlInput.oninput = () => {
-            if (currentRequest) {
-                currentRequest.url = urlInput.value;
-                syncParamsFromUrl();
-                renderParams();
-            }
-        };
-        methodSel.onchange = () => { if (currentRequest) { currentRequest.method = methodSel.value; renderHistory(); } };
+    function closeEnvManager() {
+        $('envModal').classList.remove('open');
+        saveState();
+        renderEnvSelect();
+    }
 
-        // ----- Body -----
-        bodyTypeSel.onchange = () => {
-            if (!currentRequest) return;
-            currentRequest.bodyType = bodyTypeSel.value;
-            bodyText.style.display = currentRequest.bodyType === 'none' ? 'none' : 'block';
-            bodyHint.textContent = currentRequest.bodyType === 'json' ? 'Sent with Content-Type: application/json' :
-                currentRequest.bodyType === 'form' ? 'key=value&key2=value2 — Content-Type: application/x-www-form-urlencoded' :
-                currentRequest.bodyType === 'text' ? 'Sent as raw text/plain' : '';
-        };
-        bodyText.oninput = () => { if (currentRequest) currentRequest.body = bodyText.value; };
-        bodyTypeSel.dispatchEvent(new Event('change'));
-
-        // ----- Auth -----
-        function renderAuthFields() {
-            if (!currentRequest) return;
-            authType.value = currentRequest.auth.type;
-            let html = '';
-            if (currentRequest.auth.type === 'bearer') {
-                html = `<div class="auth-field"><label>Token</label><input id="authToken" type="text" value="${escapeAttr(currentRequest.auth.token)}" placeholder="your-token-here"></div>`;
-            } else if (currentRequest.auth.type === 'basic') {
-                html = `<div class="auth-field"><label>Username</label><input id="authUser" type="text" value="${escapeAttr(currentRequest.auth.user)}"></div>
-                        <div class="auth-field"><label>Password</label><input id="authPass" type="text" value="${escapeAttr(currentRequest.auth.pass)}"></div>`;
-            } else if (currentRequest.auth.type === 'apikey') {
-                html = `<div class="auth-field"><label>Header Name</label><input id="authKey" type="text" value="${escapeAttr(currentRequest.auth.key || 'x-api-key')}"></div>
-                        <div class="auth-field"><label>Value</label><input id="authVal" type="text" value="${escapeAttr(currentRequest.auth.value)}"></div>`;
-            } else {
-                html = `<div class="smallnote">No authorization.</div>`;
-            }
-            authFields.innerHTML = html;
-            if (currentRequest.auth.type === 'bearer') $('authToken').oninput = e => currentRequest.auth.token = e.target.value;
-            if (currentRequest.auth.type === 'basic') {
-                $('authUser').oninput = e => currentRequest.auth.user = e.target.value;
-                $('authPass').oninput = e => currentRequest.auth.pass = e.target.value;
-            }
-            if (currentRequest.auth.type === 'apikey') {
-                $('authKey').oninput = e => currentRequest.auth.key = e.target.value;
-                $('authVal').oninput = e => currentRequest.auth.value = e.target.value;
-            }
-        }
-        authType.onchange = () => { if (currentRequest) { currentRequest.auth.type = authType.value; renderAuthFields(); } };
-
-        // ----- load current into form -----
-        function loadCurrentIntoForm() {
-            if (!currentRequest) {
-                clearResponse();
-                return;
-            }
-            methodSel.value = currentRequest.method;
-            urlInput.value = currentRequest.url || '';
-            if (currentRequest.params.length === 0) currentRequest.params = [{ k: '', v: '', on: true }];
-            if (currentRequest.headers.length === 0) currentRequest.headers = [{ k: '', v: '', on: true }];
-            renderParams();
-            renderHeaders();
-            bodyTypeSel.value = currentRequest.bodyType || 'json';
-            bodyText.value = currentRequest.body || '';
-            bodyTypeSel.dispatchEvent(new Event('change'));
-            renderAuthFields();
-            if (currentRequest.response) {
-                lastResponseRaw = currentRequest.response.body || '';
-                lastResponseHeaders = currentRequest.response.headers || [];
-                statusPill.style.display = 'inline-block';
-                statusPill.textContent = currentRequest.response.status ? `${currentRequest.response.status} ${currentRequest.response.statusText}` : currentRequest.response.statusText;
-                statusPill.className = '';
-                const code = currentRequest.response.status || 0;
-                if (code >= 200 && code < 300) statusPill.classList.add('s2');
-                else if (code >= 300 && code < 400) statusPill.classList.add('s3');
-                else if (code >= 400 && code < 500) statusPill.classList.add('s4');
-                else statusPill.classList.add('s5');
-                respTime.textContent = currentRequest.response.time ? currentRequest.response.time + ' ms' : '';
-                respSize.textContent = currentRequest.response.size ? formatBytes(currentRequest.response.size) : '';
-                renderResponseBody();
-            } else {
-                clearResponse();
-            }
-        }
-
-        function clearResponse() {
-            statusPill.style.display = 'none';
-            respTime.textContent = '';
-            respSize.textContent = '';
-            respBody.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
-            lastResponseRaw = '';
-            lastResponseHeaders = [];
-        }
-
-        // ----- History render with collections -----
-        function renderHistory() {
-            historyEl.innerHTML = '';
-            if (collections.length === 0) {
-                const empty = document.createElement('div');
-                empty.style.cssText = 'color: var(--muted); padding: 20px; text-align: center; font-size: 13px;';
-                empty.textContent = 'No collections yet. Create one to start!';
-                historyEl.appendChild(empty);
-                return;
-            }
-
-            collections.forEach(col => {
-                const header = document.createElement('div');
-                header.className = 'collection-header';
-                const isCollapsed = localStorage.getItem('collapsed_' + col.id) === 'true';
-                
-                const icon = document.createElement('span');
-                icon.className = 'collapse-icon' + (isCollapsed ? ' collapsed' : '');
-                icon.textContent = '▼';
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.textContent = col.name + ' (' + col.requests.length + ')';
-                
-                const actions = document.createElement('span');
-                actions.className = 'collection-actions';
-                
-                const renameBtn = document.createElement('button');
-                renameBtn.textContent = '✎';
-                renameBtn.title = 'Rename collection';
-                renameBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    const newName = prompt('Rename collection:', col.name);
-                    if (newName && newName.trim()) {
-                        col.name = newName.trim();
-                        saveToStorage();
-                        renderHistory();
+    function renderEnvManagerList() {
+        const list = $('envListItems');
+        list.innerHTML = '';
+        state.environments.forEach(env => {
+            const div = document.createElement('div');
+            div.className = 'env-list-item' + (env.id === currentEditingEnvId ? ' active' : '');
+            div.innerHTML = `
+                <span class="env-name">${escapeHtml(env.name)}</span>
+                <button class="del-env" title="Delete">🗑</button>
+            `;
+            div.onclick = (e) => {
+                if (e.target.classList.contains('del-env')) {
+                    if (state.environments.length <= 1) {
+                        showToast('Cannot delete the last environment', 'error');
+                        return;
                     }
-                };
-                
-                const delBtn = document.createElement('button');
-                delBtn.className = 'del-col';
-                delBtn.textContent = '🗑';
-                delBtn.title = 'Delete collection';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    showConfirm(
-                        'Delete Collection',
-                        `Are you sure you want to delete the collection "<span class="highlight">${escapeHtml(col.name)}</span>" and all its ${col.requests.length} requests?`,
-                        () => {
-                            const idx = collections.findIndex(c => c.id === col.id);
-                            if (idx > -1) {
-                                collections.splice(idx, 1);
-                                if (activeCollectionId === col.id) {
-                                    activeCollectionId = null;
-                                    activeRequestId = null;
-                                    currentRequest = null;
-                                }
-                                saveToStorage();
-                                renderHistory();
-                                loadCurrentIntoForm();
-                            }
-                        }
-                    );
-                };
-                
-                actions.appendChild(renameBtn);
-                actions.appendChild(delBtn);
-                
-                header.appendChild(icon);
-                header.appendChild(nameSpan);
-                header.appendChild(actions);
-                
-                header.onclick = () => {
-                    const isNowCollapsed = localStorage.getItem('collapsed_' + col.id) === 'true';
-                    localStorage.setItem('collapsed_' + col.id, isNowCollapsed ? 'false' : 'true');
-                    renderHistory();
-                };
-                
-                historyEl.appendChild(header);
-                
-                const itemsDiv = document.createElement('div');
-                itemsDiv.className = 'collection-items' + (isCollapsed ? ' collapsed' : '');
-                itemsDiv.style.maxHeight = isCollapsed ? '0' : (col.requests.length * 40 + 20) + 'px';
-                
-                col.requests.forEach(req => {
-                    const div = document.createElement('div');
-                    div.className = 'hist-item' + (req.id === activeRequestId && col.id === activeCollectionId ? ' active' : '');
-                    
-                    const methodSpan = document.createElement('span');
-                    methodSpan.className = 'hist-method m-' + req.method;
-                    methodSpan.textContent = req.method;
-                    
-                    const urlSpan = document.createElement('span');
-                    urlSpan.className = 'hist-url';
-                    urlSpan.textContent = req.name || req.url || '(no url)';
-                    
-                    const actions2 = document.createElement('span');
-                    actions2.className = 'hist-actions';
-                    
-                    const renameBtn2 = document.createElement('button');
-                    renameBtn2.className = 'hist-rename';
-                    renameBtn2.textContent = '✎';
-                    renameBtn2.title = 'Rename request';
-                    renameBtn2.onclick = (e) => {
-                        e.stopPropagation();
-                        const newName = prompt('Rename request:', req.name || 'Untitled');
-                        if (newName !== null && newName.trim() !== '') {
-                            req.name = newName.trim();
-                            saveToStorage();
-                            renderHistory();
-                        } else if (newName !== null && newName.trim() === '') {
-                            req.name = 'Untitled';
-                            saveToStorage();
-                            renderHistory();
-                        }
-                    };
-                    
-                    const delBtn2 = document.createElement('button');
-                    delBtn2.className = 'hist-delete';
-                    delBtn2.textContent = '🗑';
-                    delBtn2.title = 'Delete request';
-                    delBtn2.onclick = (e) => {
-                        e.stopPropagation();
-                        showConfirm(
-                            'Delete Request',
-                            `Are you sure you want to delete "<span class="highlight">${escapeHtml(req.name || req.url || 'Untitled')}</span>"?`,
-                            () => {
-                                const idx = col.requests.findIndex(r => r.id === req.id);
-                                if (idx > -1) {
-                                    col.requests.splice(idx, 1);
-                                    if (activeRequestId === req.id && activeCollectionId === col.id) {
-                                        activeRequestId = null;
-                                        currentRequest = null;
-                                    }
-                                    saveToStorage();
-                                    renderHistory();
-                                    loadCurrentIntoForm();
-                                }
-                            }
-                        );
-                    };
-                    
-                    const moveBtn = document.createElement('button');
-                    moveBtn.className = 'hist-move';
-                    moveBtn.textContent = '⇄';
-                    moveBtn.title = 'Move to collection';
-                    moveBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        showMoveDialog(req.id, col.id);
-                    };
-                    
-                    actions2.appendChild(renameBtn2);
-                    actions2.appendChild(moveBtn);
-                    actions2.appendChild(delBtn2);
-                    
-                    div.appendChild(methodSpan);
-                    div.appendChild(urlSpan);
-                    div.appendChild(actions2);
-                    
-                    div.onclick = () => {
-                        activeCollectionId = col.id;
-                        activeRequestId = req.id;
-                        currentRequest = req;
-                        loadCurrentIntoForm();
-                        renderHistory();
-                    };
-                    
-                    itemsDiv.appendChild(div);
-                });
-                
-                historyEl.appendChild(itemsDiv);
-            });
-        }
-
-        // ----- Move request dialog -----
-        function showMoveDialog(reqId, currentColId) {
-            const req = getRequest(currentColId, reqId);
-            if (!req) return;
-            
-            const colNames = collections
-                .filter(c => c.id !== currentColId)
-                .map(c => ({ id: c.id, name: c.name }));
-            
-            if (colNames.length === 0) {
-                alert('No other collections available to move to.');
-                return;
-            }
-            
-            const options = colNames.map((c, i) => `${i+1}. ${c.name}`).join('\n');
-            const choice = prompt(
-                `Move "${req.name || req.url || 'Untitled'}" to which collection?\n\n${options}\n\nEnter the number:`,
-                '1'
-            );
-            
-            if (choice === null) return;
-            const idx = parseInt(choice) - 1;
-            if (idx >= 0 && idx < colNames.length) {
-                const targetCol = getCollection(colNames[idx].id);
-                if (targetCol) {
-                    // Remove from current
-                    const currentCol = getCollection(currentColId);
-                    const reqIdx = currentCol.requests.findIndex(r => r.id === reqId);
-                    if (reqIdx > -1) {
-                        const movedReq = currentCol.requests.splice(reqIdx, 1)[0];
-                        targetCol.requests.push(movedReq);
-                        if (activeCollectionId === currentColId && activeRequestId === reqId) {
-                            activeCollectionId = targetCol.id;
-                            activeRequestId = movedReq.id;
-                            currentRequest = movedReq;
-                        }
-                        saveToStorage();
-                        renderHistory();
-                        loadCurrentIntoForm();
-                    }
-                }
-            }
-        }
-
-        // ----- Confirm dialog -----
-        function showConfirm(title, message, onConfirm) {
-            confirmTitle.textContent = title;
-            confirmMessage.innerHTML = message;
-            confirmOk.className = 'btn-danger';
-            confirmOk.textContent = 'Confirm';
-            confirmOk.onclick = () => {
-                closeConfirm();
-                if (onConfirm) onConfirm();
-            };
-            confirmCancel.onclick = closeConfirm;
-            confirmDialog.classList.add('open');
-            confirmCallback = onConfirm;
-        }
-
-        function closeConfirm() {
-            confirmDialog.classList.remove('open');
-            confirmCallback = null;
-        }
-
-        confirmDialog.addEventListener('click', (e) => {
-            if (e.target === confirmDialog) closeConfirm();
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && confirmDialog.classList.contains('open')) {
-                closeConfirm();
-            }
-        });
-
-        // ----- Save -----
-        $('saveBtn').onclick = () => {
-            if (!currentRequest) {
-                alert('No request loaded. Select or create a request first.');
-                return;
-            }
-            syncUrlFromParams();
-            if (!currentRequest.url) { flashUrl(); return; }
-            
-            // Find the collection and update
-            const col = getCollection(activeCollectionId);
-            if (!col) {
-                // Create a new collection if none exists
-                const newCol = blankCollection('My Collection');
-                newCol.requests.push(currentRequest);
-                collections.push(newCol);
-                activeCollectionId = newCol.id;
-            } else {
-                // Update existing
-                const idx = col.requests.findIndex(r => r.id === currentRequest.id);
-                if (idx > -1) {
-                    col.requests[idx] = JSON.parse(JSON.stringify(currentRequest));
-                } else {
-                    col.requests.push(JSON.parse(JSON.stringify(currentRequest)));
-                    activeRequestId = currentRequest.id;
-                }
-            }
-            saveToStorage();
-            renderHistory();
-        };
-
-        function flashUrl() {
-            urlInput.style.borderColor = 'var(--err)';
-            urlInput.placeholder = 'Enter a URL first';
-            setTimeout(() => { urlInput.style.borderColor = 'var(--input-border)'; urlInput.placeholder = 'https://api.example.com/v1/resource'; }, 900);
-        }
-
-        // ----- New request -----
-        $('newReqBtn').onclick = () => {
-            const newReq = blankRequest();
-            if (collections.length === 0) {
-                const newCol = blankCollection('My Collection');
-                collections.push(newCol);
-                activeCollectionId = newCol.id;
-            }
-            const col = getCollection(activeCollectionId) || collections[0];
-            col.requests.push(newReq);
-            activeRequestId = newReq.id;
-            currentRequest = newReq;
-            saveToStorage();
-            loadCurrentIntoForm();
-            renderHistory();
-        };
-
-        // ----- New collection -----
-        $('newCollectionBtn').onclick = () => {
-            const name = prompt('Enter collection name:', 'New Collection');
-            if (name !== null && name.trim() !== '') {
-                const newCol = blankCollection(name.trim());
-                collections.push(newCol);
-                activeCollectionId = newCol.id;
-                activeRequestId = null;
-                currentRequest = null;
-                saveToStorage();
-                renderHistory();
-                loadCurrentIntoForm();
-            }
-        };
-
-        // ----- Send -----
-        $('sendBtn').onclick = sendRequest;
-        urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendRequest(); });
-
-        async function sendRequest() {
-            if (!currentRequest) {
-                alert('No request loaded.');
-                return;
-            }
-            syncUrlFromParams();
-            if (!currentRequest.url) { flashUrl(); return; }
-            let finalUrl = currentRequest.url;
-            if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
-
-            const headers = {};
-            currentRequest.headers.filter(h => h.on && h.k).forEach(h => headers[h.k] = h.v);
-
-            if (currentRequest.auth.type === 'bearer' && currentRequest.auth.token) {
-                headers['Authorization'] = 'Bearer ' + currentRequest.auth.token;
-            } else if (currentRequest.auth.type === 'basic' && (currentRequest.auth.user || currentRequest.auth.pass)) {
-                headers['Authorization'] = 'Basic ' + btoa(currentRequest.auth.user + ':' + currentRequest.auth.pass);
-            } else if (currentRequest.auth.type === 'apikey' && currentRequest.auth.key) {
-                headers[currentRequest.auth.key] = currentRequest.auth.value;
-            }
-
-            let bodyToSend;
-            const method = currentRequest.method;
-            const canHaveBody = !['GET', 'HEAD'].includes(method);
-            if (canHaveBody && currentRequest.bodyType !== 'none' && currentRequest.body) {
-                if (currentRequest.bodyType === 'json') {
-                    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-                    bodyToSend = currentRequest.body;
-                } else if (currentRequest.bodyType === 'text') {
-                    headers['Content-Type'] = headers['Content-Type'] || 'text/plain';
-                    bodyToSend = currentRequest.body;
-                } else if (currentRequest.bodyType === 'form') {
-                    headers['Content-Type'] = headers['Content-Type'] || 'application/x-www-form-urlencoded';
-                    bodyToSend = currentRequest.body;
-                }
-            }
-
-            const sendBtn = $('sendBtn');
-            sendBtn.disabled = true; sendBtn.textContent = 'Sending...';
-            statusPill.style.display = 'none';
-            respTime.textContent = '';
-            respSize.textContent = '';
-            respBody.innerHTML = '<div id="respPlaceholder">Loading…</div>';
-
-            const t0 = performance.now();
-            try {
-                const res = await fetch(finalUrl, { method, headers, body: bodyToSend, mode: 'cors' });
-                const elapsed = Math.round(performance.now() - t0);
-                const text = await res.text();
-                lastResponseRaw = text;
-                lastResponseHeaders = [...res.headers.entries()];
-                const size = new Blob([text]).size;
-
-                currentRequest.response = {
-                    status: res.status,
-                    statusText: res.statusText,
-                    time: elapsed,
-                    size: size,
-                    body: text,
-                    headers: lastResponseHeaders
-                };
-
-                showStatus(res.status, res.statusText);
-                respTime.textContent = elapsed + ' ms';
-                respSize.textContent = formatBytes(size);
-                renderResponseBody();
-
-                // Auto-save response
-                const col = getCollection(activeCollectionId);
-                if (col) {
-                    const idx = col.requests.findIndex(r => r.id === currentRequest.id);
-                    if (idx > -1) {
-                        col.requests[idx] = JSON.parse(JSON.stringify(currentRequest));
-                        saveToStorage();
-                    }
-                }
-            } catch (err) {
-                showStatus(0, 'Network Error');
-                respBody.innerHTML = `<div style="color:var(--err)">⚠ ${escapeHtml(err.message)}<br><span class="muted">CORS, unreachable, or invalid URL.</span></div>`;
-                currentRequest.response = null;
-            } finally {
-                sendBtn.disabled = false; sendBtn.textContent = 'Send';
-            }
-        }
-
-        function showStatus(code, text) {
-            statusPill.style.display = 'inline-block';
-            statusPill.textContent = code ? `${code} ${text}` : text;
-            statusPill.className = '';
-            if (code >= 200 && code < 300) statusPill.classList.add('s2');
-            else if (code >= 300 && code < 400) statusPill.classList.add('s3');
-            else if (code >= 400 && code < 500) statusPill.classList.add('s4');
-            else statusPill.classList.add('s5');
-        }
-
-        function renderResponseBody() {
-            const box = respBody;
-            if (currentRespTab === 'headers') {
-                if (!lastResponseHeaders || lastResponseHeaders.length === 0) {
-                    box.innerHTML = '<div class="muted">No headers</div>';
-                    return;
-                }
-                box.innerHTML = lastResponseHeaders.map(([k, v]) =>
-                    `<div><span class="json-key">${escapeHtml(k)}</span>: ${escapeHtml(v)}</div>`
-                ).join('');
-                return;
-            }
-            if (!lastResponseRaw) {
-                box.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
-                return;
-            }
-            try {
-                const obj = JSON.parse(lastResponseRaw);
-                box.innerHTML = syntaxHighlight(JSON.stringify(obj, null, 2));
-            } catch (_) {
-                box.textContent = lastResponseRaw;
-            }
-        }
-
-        function syntaxHighlight(json) {
-            json = escapeHtml(json);
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|null|-?\d+(\.\d+)?([eE][+-]?\d+)?)/g, match => {
-                let cls = 'json-num';
-                if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
-                else if (/true|false/.test(match)) cls = 'json-bool';
-                else if (/null/.test(match)) cls = 'json-null';
-                return `<span class="${cls}">${match}</span>`;
-            });
-        }
-
-        copyBtn.onclick = () => {
-            navigator.clipboard.writeText(lastResponseRaw || '').then(() => {
-                const orig = copyBtn.textContent;
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => copyBtn.textContent = orig, 1200);
-            });
-        };
-
-        // ----- EXPORT -----
-        function generateExport() {
-            const exportData = {
-                exportedAt: new Date().toISOString(),
-                version: '1.0',
-                collections: collections.map(c => ({
-                    id: c.id,
-                    name: c.name,
-                    requests: c.requests.map(r => ({
-                        id: r.id,
-                        name: r.name || 'Untitled',
-                        method: r.method,
-                        url: r.url,
-                        params: r.params.filter(p => p.on && p.k).map(p => ({ key: p.k, value: p.v })),
-                        headers: r.headers.filter(h => h.on && h.k).map(h => ({ key: h.k, value: h.v })),
-                        auth: {
-                            type: r.auth.type,
-                            ...(r.auth.type === 'bearer' ? { token: r.auth.token || '' } : {}),
-                            ...(r.auth.type === 'basic' ? { username: r.auth.user || '', password: r.auth.pass || '' } : {}),
-                            ...(r.auth.type === 'apikey' ? { headerName: r.auth.key || 'x-api-key', value: r.auth.value || '' } : {})
-                        },
-                        body: {
-                            type: r.bodyType || 'none',
-                            content: r.body || ''
-                        },
-                        response: r.response ? {
-                            status: r.response.status,
-                            statusText: r.response.statusText,
-                            timeMs: r.response.time,
-                            sizeBytes: r.response.size,
-                            body: r.response.body,
-                            headers: r.response.headers ? Object.fromEntries(r.response.headers) : {}
-                        } : null
-                    }))
-                }))
-            };
-            return JSON.stringify(exportData, null, 2);
-        }
-
-        function openExportModal() {
-            exportText.value = generateExport();
-            exportModal.classList.add('open');
-        }
-
-        function closeExportModal() {
-            exportModal.classList.remove('open');
-        }
-
-        document.getElementById('exportBtn').addEventListener('click', openExportModal);
-        document.getElementById('closeExportBtn').addEventListener('click', closeExportModal);
-        exportModal.addEventListener('click', (e) => {
-            if (e.target === exportModal) closeExportModal();
-        });
-
-        document.getElementById('copyExportBtn').addEventListener('click', () => {
-            navigator.clipboard.writeText(exportText.value).then(() => {
-                const btn = document.getElementById('copyExportBtn');
-                const orig = btn.textContent;
-                btn.textContent = '✅ Copied!';
-                setTimeout(() => btn.textContent = orig, 1500);
-            });
-        });
-
-        document.getElementById('downloadExportBtn').addEventListener('click', () => {
-            const blob = new Blob([exportText.value], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `api-collections-${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        // ----- IMPORT -----
-        function openImportModal() {
-            importText.value = '';
-            importStatus.textContent = '';
-            importAllCheck.checked = true;
-            importModal.classList.add('open');
-        }
-
-        function closeImportModal() {
-            importModal.classList.remove('open');
-        }
-
-        document.getElementById('importBtn').addEventListener('click', openImportModal);
-        document.getElementById('closeImportBtn').addEventListener('click', closeImportModal);
-        importModal.addEventListener('click', (e) => {
-            if (e.target === importModal) closeImportModal();
-        });
-
-        document.getElementById('confirmImportBtn').addEventListener('click', () => {
-            try {
-                const data = JSON.parse(importText.value);
-                if (!data.collections || !Array.isArray(data.collections)) {
-                    throw new Error('Invalid format: missing "collections" array');
-                }
-
-                const importAll = importAllCheck.checked;
-                let imported = 0;
-
-                if (importAll) {
-                    // Import all collections
-                    data.collections.forEach(c => {
-                        const newCol = blankCollection(c.name || 'Imported Collection');
-                        newCol.id = c.id || uid();
-                        c.requests.forEach(r => {
-                            const newReq = blankRequest(r.name || 'Untitled');
-                            newReq.id = r.id || uid();
-                            newReq.method = r.method || 'GET';
-                            newReq.url = r.url || '';
-                            newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                            newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                            newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
-                            newReq.bodyType = r.body?.type || 'json';
-                            newReq.body = r.body?.content || '';
-                            if (r.response) {
-                                newReq.response = {
-                                    status: r.response.status,
-                                    statusText: r.response.statusText,
-                                    time: r.response.timeMs,
-                                    size: r.response.sizeBytes,
-                                    body: r.response.body,
-                                    headers: r.response.headers ? Object.entries(r.response.headers) : []
-                                };
-                            }
-                            newCol.requests.push(newReq);
-                        });
-                        collections.push(newCol);
-                        imported++;
+                    showConfirmModal('Delete Environment', `Delete "${env.name}"?`, () => {
+                        state.environments = state.environments.filter(e => e.id !== env.id);
+                        if (currentEditingEnvId === env.id) currentEditingEnvId = state.environments[0].id;
+                        if (state.activeEnvId === env.id) state.activeEnvId = state.environments[0].id;
+                        renderEnvManagerList();
+                        renderEnvManagerDetails();
                     });
                 } else {
-                    // Import specific collections - show selection
-                    const colNames = data.collections.map((c, i) => `${i+1}. ${c.name || 'Unnamed'}`);
-                    const choice = prompt(
-                        `Select which collection to import (enter number):\n\n${colNames.join('\n')}\n\nOr type "all" to import all:`,
-                        '1'
-                    );
-                    if (choice === null) return;
-                    
-                    if (choice.toLowerCase() === 'all') {
-                        // Import all
-                        data.collections.forEach(c => {
-                            const newCol = blankCollection(c.name || 'Imported Collection');
-                            newCol.id = c.id || uid();
-                            c.requests.forEach(r => {
-                                const newReq = blankRequest(r.name || 'Untitled');
-                                newReq.id = r.id || uid();
-                                newReq.method = r.method || 'GET';
-                                newReq.url = r.url || '';
-                                newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                                newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                                newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
-                                newReq.bodyType = r.body?.type || 'json';
-                                newReq.body = r.body?.content || '';
-                                if (r.response) {
-                                    newReq.response = {
-                                        status: r.response.status,
-                                        statusText: r.response.statusText,
-                                        time: r.response.timeMs,
-                                        size: r.response.sizeBytes,
-                                        body: r.response.body,
-                                        headers: r.response.headers ? Object.entries(r.response.headers) : []
-                                    };
-                                }
-                                newCol.requests.push(newReq);
-                            });
-                            collections.push(newCol);
-                            imported++;
-                        });
-                    } else {
-                        const idx = parseInt(choice) - 1;
-                        if (idx >= 0 && idx < data.collections.length) {
-                            const c = data.collections[idx];
-                            const newCol = blankCollection(c.name || 'Imported Collection');
-                            newCol.id = c.id || uid();
-                            c.requests.forEach(r => {
-                                const newReq = blankRequest(r.name || 'Untitled');
-                                newReq.id = r.id || uid();
-                                newReq.method = r.method || 'GET';
-                                newReq.url = r.url || '';
-                                newReq.params = r.params && r.params.length ? r.params.map(p => ({ k: p.key || '', v: p.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                                newReq.headers = r.headers && r.headers.length ? r.headers.map(h => ({ k: h.key || '', v: h.value || '', on: true })) : [{ k: '', v: '', on: true }];
-                                newReq.auth = r.auth || { type: 'none', token: '', user: '', pass: '', key: '', value: '' };
-                                newReq.bodyType = r.body?.type || 'json';
-                                newReq.body = r.body?.content || '';
-                                if (r.response) {
-                                    newReq.response = {
-                                        status: r.response.status,
-                                        statusText: r.response.statusText,
-                                        time: r.response.timeMs,
-                                        size: r.response.sizeBytes,
-                                        body: r.response.body,
-                                        headers: r.response.headers ? Object.entries(r.response.headers) : []
-                                    };
-                                }
-                                newCol.requests.push(newReq);
-                            });
-                            collections.push(newCol);
-                            imported++;
-                        } else {
-                            throw new Error('Invalid selection');
-                        }
-                    }
+                    currentEditingEnvId = env.id;
+                    renderEnvManagerList();
+                    renderEnvManagerDetails();
                 }
+            };
+            list.appendChild(div);
+        });
+    }
 
-                if (imported === 0) {
-                    importStatus.textContent = '❌ No collections imported.';
-                    return;
-                }
+    function renderEnvManagerDetails() {
+        const env = state.environments.find(e => e.id === currentEditingEnvId);
+        if (!env) return;
+        
+        $('currentEnvName').textContent = env.name;
+        const table = $('envVarsTable');
+        table.innerHTML = '';
+        
+        env.variables.forEach((row, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" placeholder="Key (e.g. base_url)" value="${escapeAttr(row.k)}"></td>
+                <td><input type="text" placeholder="Value" value="${escapeAttr(row.v)}"></td>
+                <td style="width:30px"><button class="rowBtn">✕</button></td>
+            `;
+            const [kIn, vIn] = tr.querySelectorAll('input');
+            const del = tr.querySelector('button');
+            
+            kIn.oninput = () => { row.k = kIn.value; };
+            vIn.oninput = () => { row.v = vIn.value; };
+            del.onclick = () => { env.variables.splice(i, 1); renderEnvManagerDetails(); };
+            table.appendChild(tr);
+        });
+    }
 
-                saveToStorage();
-                renderHistory();
-                closeImportModal();
-                importStatus.textContent = `✅ Imported ${imported} collection(s) successfully!`;
-                setTimeout(() => importStatus.textContent = '', 3000);
-
-            } catch (err) {
-                importStatus.textContent = '❌ Error: ' + err.message;
-                setTimeout(() => importStatus.textContent = '', 4000);
+    $('manageEnvBtn').onclick = openEnvManager;
+    $('closeEnvBtn').onclick = closeEnvManager;
+    $('saveEnvBtn').onclick = closeEnvManager;
+    
+    $('addEnvBtn').onclick = () => {
+        showInputModal('New Environment', 'New Environment', (name) => {
+            if (name && name.trim()) {
+                const newEnv = { id: uid(), name: name.trim(), variables: [] };
+                state.environments.push(newEnv);
+                currentEditingEnvId = newEnv.id;
+                renderEnvManagerList();
+                renderEnvManagerDetails();
             }
         });
+    };
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                if (exportModal.classList.contains('open')) closeExportModal();
-                if (importModal.classList.contains('open')) closeImportModal();
-                if (confirmDialog.classList.contains('open')) closeConfirm();
-            }
-        });
-
-        // ----- INIT -----
-        const hasData = loadFromStorage();
-        if (!hasData || collections.length === 0) {
-            // Seed with example
-            const exampleCol = blankCollection('Example Collection');
-            const exampleReq = blankRequest('Example GET');
-            exampleReq.url = 'https://jsonplaceholder.typicode.com/posts/1';
-            exampleReq.method = 'GET';
-            exampleCol.requests.push(exampleReq);
-            collections.push(exampleCol);
-            activeCollectionId = exampleCol.id;
-            activeRequestId = exampleReq.id;
-            currentRequest = exampleReq;
-            saveToStorage();
-        } else {
-            // Load first request if exists
-            if (collections.length > 0) {
-                const firstCol = collections[0];
-                activeCollectionId = firstCol.id;
-                if (firstCol.requests.length > 0) {
-                    activeRequestId = firstCol.requests[0].id;
-                    currentRequest = firstCol.requests[0];
-                } else {
-                    // Create a default request
-                    const newReq = blankRequest('New Request');
-                    firstCol.requests.push(newReq);
-                    activeRequestId = newReq.id;
-                    currentRequest = newReq;
-                    saveToStorage();
-                }
-            }
+    $('addEnvVarBtn').onclick = () => {
+        const env = state.environments.find(e => e.id === currentEditingEnvId);
+        if (env) {
+            env.variables.push({ k: '', v: '', on: true });
+            renderEnvManagerDetails();
         }
+    };
+
+    // ----- DATA STRUCTURES -----
+    function blankRequest(name = '') {
+        return {
+            id: uid(), name: name || 'Untitled', method: 'GET', url: '',
+            params: [{ k: '', v: '', on: true }],
+            headers: [{ k: '', v: '', on: true }],
+            auth: { type: 'none', token: '', user: '', pass: '', key: '', value: '' },
+            bodyType: 'json', body: '', response: null
+        };
+    }
+
+    function blankCollection(name = '') {
+        return { id: uid(), name: name || 'New Collection', requests: [] };
+    }
+
+    // ----- UI RENDERING -----
+    function renderKVTable(table, list, onChange) {
+        table.innerHTML = '';
+        list.forEach((row, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="width:30px"><input type="checkbox" ${row.on ? 'checked' : ''}></td>
+                <td><input type="text" placeholder="Key" value="${escapeAttr(row.k)}"></td>
+                <td><input type="text" placeholder="Value" value="${escapeAttr(row.v)}"></td>
+                <td style="width:30px"><button class="rowBtn">✕</button></td>
+            `;
+            const [chk, kIn, vIn] = tr.querySelectorAll('input');
+            const del = tr.querySelector('button');
+            
+            chk.onchange = () => { row.on = chk.checked; onChange(); };
+            kIn.oninput = () => { row.k = kIn.value; onChange(); };
+            vIn.oninput = () => { row.v = vIn.value; onChange(); };
+            del.onclick = () => { list.splice(i, 1); renderKVTable(table, list, onChange); onChange(); };
+            table.appendChild(tr);
+        });
+    }
+
+    function ensureTrailingEmpty(list) {
+        if (list.length === 0 || list[list.length - 1].k !== '' || list[list.length - 1].v !== '') {
+            list.push({ k: '', v: '', on: true });
+        }
+    }
+
+    function renderParams() {
+        if (!currentRequest) return;
+        ensureTrailingEmpty(currentRequest.params);
+        renderKVTable(paramsTable, currentRequest.params, () => {
+            syncUrlFromParams();
+            ensureTrailingEmpty(currentRequest.params);
+            updateBadges();
+        });
+        updateBadges();
+    }
+
+    function renderHeaders() {
+        if (!currentRequest) return;
+        ensureTrailingEmpty(currentRequest.headers);
+        renderKVTable(headersTable, currentRequest.headers, () => {
+            ensureTrailingEmpty(currentRequest.headers);
+            updateBadges();
+        });
+        updateBadges();
+    }
+
+    function updateBadges() {
+        if (!currentRequest) return;
+        const pc = currentRequest.params.filter(p => p.on && p.k).length;
+        const hc = currentRequest.headers.filter(h => h.on && h.k).length;
+        const pcEl = $('paramCount'), hcEl = $('headerCount');
+        pcEl.style.display = pc ? '' : 'none'; pcEl.textContent = pc;
+        hcEl.style.display = hc ? '' : 'none'; hcEl.textContent = hc;
+    }
+
+    $('addParamBtn').onclick = () => { if (currentRequest) { currentRequest.params.push({ k: '', v: '', on: true }); renderParams(); } };
+    $('addHeaderBtn').onclick = () => { if (currentRequest) { currentRequest.headers.push({ k: '', v: '', on: true }); renderHeaders(); } };
+
+    function syncUrlFromParams() {
+        if (!currentRequest) return;
+        const [base] = (currentRequest.url || '').split('?');
+        const active = currentRequest.params.filter(p => p.on && p.k);
+        const qs = active.map(p => encodeURIComponent(p.k) + '=' + encodeURIComponent(p.v)).join('&');
+        currentRequest.url = qs ? base + '?' + qs : base;
+        if (document.activeElement !== urlInput) urlInput.value = currentRequest.url;
+    }
+
+    function syncParamsFromUrl() {
+        if (!currentRequest) return;
+        try {
+            const qIdx = currentRequest.url.indexOf('?');
+            if (qIdx === -1) { currentRequest.params = [{ k: '', v: '', on: true }]; return; }
+            const qs = currentRequest.url.slice(qIdx + 1);
+            const parts = qs.split('&').filter(Boolean);
+            currentRequest.params = parts.map(p => {
+                const [k, v = ''] = p.split('=');
+                return { k: decodeURIComponent(k || ''), v: decodeURIComponent(v || ''), on: true };
+            });
+            if (currentRequest.params.length === 0) currentRequest.params.push({ k: '', v: '', on: true });
+        } catch (_) {}
+    }
+
+    urlInput.oninput = () => {
+        if (currentRequest) {
+            currentRequest.url = urlInput.value;
+            syncParamsFromUrl();
+            renderParams();
+        }
+    };
+    methodSel.onchange = () => { if (currentRequest) { currentRequest.method = methodSel.value; renderHistory(); } };
+
+    bodyTypeSel.onchange = () => {
+        if (!currentRequest) return;
+        currentRequest.bodyType = bodyTypeSel.value;
+        bodyText.style.display = currentRequest.bodyType === 'none' ? 'none' : 'block';
+        bodyHint.textContent = currentRequest.bodyType === 'json' ? 'Sent with Content-Type: application/json' :
+            currentRequest.bodyType === 'form' ? 'key=value&key2=value2' :
+            currentRequest.bodyType === 'text' ? 'Sent as raw text/plain' : '';
+    };
+    bodyText.oninput = () => { if (currentRequest) currentRequest.body = bodyText.value; };
+
+    function renderAuthFields() {
+        if (!currentRequest) return;
+        authType.value = currentRequest.auth.type;
+        let html = '';
+        if (currentRequest.auth.type === 'bearer') {
+            html = `<div style="margin-bottom:10px"><label style="display:block; font-size:12px; color:var(--muted); margin-bottom:4px;">Token</label><input id="authToken" type="text" value="${escapeAttr(currentRequest.auth.token)}" style="width:100%; max-width:400px; padding:8px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px;"></div>`;
+        } else if (currentRequest.auth.type === 'basic') {
+            html = `<div style="display:flex; gap:10px; margin-bottom:10px;">
+                <div style="flex:1"><label style="display:block; font-size:12px; color:var(--muted); margin-bottom:4px;">Username</label><input id="authUser" type="text" value="${escapeAttr(currentRequest.auth.user)}" style="width:100%; padding:8px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px;"></div>
+                <div style="flex:1"><label style="display:block; font-size:12px; color:var(--muted); margin-bottom:4px;">Password</label><input id="authPass" type="text" value="${escapeAttr(currentRequest.auth.pass)}" style="width:100%; padding:8px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px;"></div>
+            </div>`;
+        } else if (currentRequest.auth.type === 'apikey') {
+            html = `<div style="display:flex; gap:10px; margin-bottom:10px;">
+                <div style="flex:1"><label style="display:block; font-size:12px; color:var(--muted); margin-bottom:4px;">Header Name</label><input id="authKey" type="text" value="${escapeAttr(currentRequest.auth.key || 'x-api-key')}" style="width:100%; padding:8px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px;"></div>
+                <div style="flex:2"><label style="display:block; font-size:12px; color:var(--muted); margin-bottom:4px;">Value</label><input id="authVal" type="text" value="${escapeAttr(currentRequest.auth.value)}" style="width:100%; padding:8px; background:var(--input-bg); border:1px solid var(--input-border); color:var(--text); border-radius:6px;"></div>
+            </div>`;
+        } else {
+            html = `<div class="smallnote">No authorization configured.</div>`;
+        }
+        authFields.innerHTML = html;
+        
+        if (currentRequest.auth.type === 'bearer') $('authToken').oninput = e => currentRequest.auth.token = e.target.value;
+        if (currentRequest.auth.type === 'basic') {
+            $('authUser').oninput = e => currentRequest.auth.user = e.target.value;
+            $('authPass').oninput = e => currentRequest.auth.pass = e.target.value;
+        }
+        if (currentRequest.auth.type === 'apikey') {
+            $('authKey').oninput = e => currentRequest.auth.key = e.target.value;
+            $('authVal').oninput = e => currentRequest.auth.value = e.target.value;
+        }
+    }
+    authType.onchange = () => { if (currentRequest) { currentRequest.auth.type = authType.value; renderAuthFields(); } };
+
+    function loadCurrentIntoForm() {
+        if (!currentRequest) {
+            clearResponse();
+            methodSel.value = 'GET';
+            urlInput.value = '';
+            paramsTable.innerHTML = '';
+            headersTable.innerHTML = '';
+            bodyText.value = '';
+            authFields.innerHTML = '';
+            return;
+        }
+        methodSel.value = currentRequest.method;
+        urlInput.value = currentRequest.url || '';
+        renderParams();
+        renderHeaders();
+        bodyTypeSel.value = currentRequest.bodyType || 'json';
+        bodyText.value = currentRequest.body || '';
+        bodyTypeSel.dispatchEvent(new Event('change'));
+        renderAuthFields();
+        
+        if (currentRequest.response) {
+            lastResponseRaw = currentRequest.response.body || '';
+            lastResponseHeaders = currentRequest.response.headers || [];
+            showStatus(currentRequest.response.status, currentRequest.response.statusText);
+            respTime.textContent = currentRequest.response.time ? currentRequest.response.time + ' ms' : '';
+            respSize.textContent = currentRequest.response.size ? formatBytes(currentRequest.response.size) : '';
+            renderResponseBody();
+        } else {
+            clearResponse();
+        }
+    }
+
+    function clearResponse() {
+        statusPill.style.display = 'none';
+        respTime.textContent = '';
+        respSize.textContent = '';
+        respBody.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
+        lastResponseRaw = '';
+        lastResponseHeaders = [];
+    }
+
+    // ----- HISTORY (SIDEBAR) -----
+    function renderHistory() {
+        historyEl.innerHTML = '';
+        const query = searchQuery.toLowerCase();
+        
+        let hasVisibleItems = false;
+
+        state.collections.forEach(col => {
+            const filteredReqs = col.requests.filter(r => 
+                !query || 
+                (r.name && r.name.toLowerCase().includes(query)) || 
+                (r.url && r.url.toLowerCase().includes(query)) ||
+                (r.method && r.method.toLowerCase().includes(query))
+            );
+
+            if (query && filteredReqs.length === 0) return; // Hide empty collections in search
+
+            hasVisibleItems = true;
+            const isCollapsed = localStorage.getItem('collapsed_' + col.id) === 'true' && !query; // Force open if searching
+
+            const header = document.createElement('div');
+            header.className = 'collection-header';
+            header.innerHTML = `
+                <span class="collapse-icon ${isCollapsed ? 'collapsed' : ''}">▼</span>
+                <span class="col-name">${escapeHtml(col.name)}</span>
+                <span class="col-count">${col.requests.length}</span>
+                <div class="col-actions">
+                    <button class="rename-col" title="Rename">✎</button>
+                    <button class="del-col" title="Delete">🗑</button>
+                </div>
+            `;
+
+            header.querySelector('.collapse-icon').onclick = (e) => {
+                e.stopPropagation();
+                localStorage.setItem('collapsed_' + col.id, isCollapsed ? 'false' : 'true');
+                renderHistory();
+            };
+            
+            header.querySelector('.col-name').onclick = () => {
+                 localStorage.setItem('collapsed_' + col.id, isCollapsed ? 'false' : 'true');
+                 renderHistory();
+            };
+
+            header.querySelector('.rename-col').onclick = (e) => {
+                e.stopPropagation();
+                showInputModal('Rename Collection', col.name, (newName) => {
+                    if (newName && newName.trim()) {
+                        col.name = newName.trim();
+                        saveState();
+                        renderHistory();
+                    }
+                });
+            };
+
+            header.querySelector('.del-col').onclick = (e) => {
+                e.stopPropagation();
+                showConfirmModal('Delete Collection', `Delete "<b>${escapeHtml(col.name)}</b>" and all its requests?`, () => {
+                    state.collections = state.collections.filter(c => c.id !== col.id);
+                    if (state.activeColId === col.id) {
+                        state.activeColId = null;
+                        state.activeReqId = null;
+                        currentRequest = null;
+                    }
+                    saveState();
+                    renderHistory();
+                    loadCurrentIntoForm();
+                    showToast('Collection deleted', 'success');
+                });
+            };
+
+            historyEl.appendChild(header);
+
+            const itemsDiv = document.createElement('div');
+            itemsDiv.className = 'collection-items' + (isCollapsed ? ' collapsed' : '');
+            itemsDiv.style.maxHeight = isCollapsed ? '0' : (filteredReqs.length * 40 + 20) + 'px';
+
+            filteredReqs.forEach(req => {
+                const div = document.createElement('div');
+                div.className = 'hist-item' + (req.id === state.activeReqId && col.id === state.activeColId ? ' active' : '');
+                div.innerHTML = `
+                    <span class="hist-method m-${req.method}">${req.method}</span>
+                    <span class="hist-url">${escapeHtml(req.name || req.url || '(no url)')}</span>
+                    <div class="hist-actions">
+                        <button class="hist-rename" title="Rename">✎</button>
+                        <button class="hist-delete" title="Delete">🗑</button>
+                    </div>
+                `;
+
+                div.querySelector('.hist-rename').onclick = (e) => {
+                    e.stopPropagation();
+                    showInputModal('Rename Request', req.name, (newName) => {
+                        if (newName !== null && newName.trim() !== '') {
+                            req.name = newName.trim();
+                            saveState();
+                            renderHistory();
+                        }
+                    });
+                };
+
+                div.querySelector('.hist-delete').onclick = (e) => {
+                    e.stopPropagation();
+                    showConfirmModal('Delete Request', `Delete "<b>${escapeHtml(req.name || req.url)}</b>"?`, () => {
+                        col.requests = col.requests.filter(r => r.id !== req.id);
+                        if (state.activeReqId === req.id) {
+                            state.activeReqId = null;
+                            currentRequest = null;
+                        }
+                        saveState();
+                        renderHistory();
+                        loadCurrentIntoForm();
+                        showToast('Request deleted', 'success');
+                    });
+                };
+
+                div.onclick = () => {
+                    state.activeColId = col.id;
+                    state.activeReqId = req.id;
+                    currentRequest = req;
+                    loadCurrentIntoForm();
+                    renderHistory();
+                };
+
+                itemsDiv.appendChild(div);
+            });
+
+            historyEl.appendChild(itemsDiv);
+        });
+
+        if (!hasVisibleItems) {
+            historyEl.innerHTML = `<div style="color:var(--muted); text-align:center; padding:40px 20px; font-size:14px;">
+                ${query ? 'No requests match your search.' : 'No collections yet. Create one to start!'}
+            </div>`;
+        }
+    }
+
+    $('searchInput').oninput = (e) => {
+        searchQuery = e.target.value;
+        renderHistory();
+    };
+
+    // ----- ACTIONS -----
+    $('newCollectionBtn').onclick = () => {
+        showInputModal('New Collection', 'My Collection', (name) => {
+            if (name && name.trim()) {
+                const newCol = blankCollection(name.trim());
+                state.collections.push(newCol);
+                state.activeColId = newCol.id;
+                saveState();
+                renderHistory();
+                showToast('Collection created', 'success');
+            }
+        });
+    };
+
+    $('newReqBtn').onclick = () => {
+        if (state.collections.length === 0) {
+            const newCol = blankCollection('My Collection');
+            state.collections.push(newCol);
+            state.activeColId = newCol.id;
+        }
+        
+        const col = state.collections.find(c => c.id === state.activeColId) || state.collections[0];
+        const newReq = blankRequest();
+        col.requests.push(newReq);
+        
+        state.activeReqId = newReq.id;
+        currentRequest = newReq;
+        
+        saveState();
         loadCurrentIntoForm();
         renderHistory();
-    })();
+        urlInput.focus();
+    };
+
+    // ----- SEND REQUEST -----
+    $('sendBtn').onclick = sendRequest;
+    
+    async function sendRequest() {
+        if (!currentRequest) {
+            showToast('No request loaded', 'error');
+            return;
+        }
+        syncUrlFromParams();
+        
+        // INTERPOLATION HAPPENS HERE
+        let finalUrl = interpolateString(currentRequest.url);
+        if (!finalUrl) {
+            showToast('URL is required', 'error');
+            urlInput.focus();
+            return;
+        }
+        if (!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
+
+        const headers = {};
+        currentRequest.headers.filter(h => h.on && h.k).forEach(h => {
+            headers[interpolateString(h.k)] = interpolateString(h.v);
+        });
+
+        // Auth
+        if (currentRequest.auth.type === 'bearer' && currentRequest.auth.token) {
+            headers['Authorization'] = 'Bearer ' + interpolateString(currentRequest.auth.token);
+        } else if (currentRequest.auth.type === 'basic' && (currentRequest.auth.user || currentRequest.auth.pass)) {
+            const user = interpolateString(currentRequest.auth.user);
+            const pass = interpolateString(currentRequest.auth.pass);
+            headers['Authorization'] = 'Basic ' + btoa(user + ':' + pass);
+        } else if (currentRequest.auth.type === 'apikey' && currentRequest.auth.key) {
+            headers[interpolateString(currentRequest.auth.key)] = interpolateString(currentRequest.auth.value);
+        }
+
+        let bodyToSend;
+        const method = currentRequest.method;
+        const canHaveBody = !['GET', 'HEAD'].includes(method);
+        
+        if (canHaveBody && currentRequest.bodyType !== 'none' && currentRequest.body) {
+            const interpolatedBody = interpolateString(currentRequest.body);
+            if (currentRequest.bodyType === 'json') {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+                bodyToSend = interpolatedBody;
+            } else if (currentRequest.bodyType === 'text') {
+                headers['Content-Type'] = headers['Content-Type'] || 'text/plain';
+                bodyToSend = interpolatedBody;
+            } else if (currentRequest.bodyType === 'form') {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/x-www-form-urlencoded';
+                bodyToSend = interpolatedBody;
+            }
+        }
+
+        const sendBtn = $('sendBtn');
+        sendBtn.disabled = true; sendBtn.textContent = 'Sending...';
+        clearResponse();
+        respBody.innerHTML = '<div id="respPlaceholder">Loading...</div>';
+
+        const t0 = performance.now();
+        try {
+            const res = await fetch(finalUrl, { method, headers, body: bodyToSend, mode: 'cors' });
+            const elapsed = Math.round(performance.now() - t0);
+            const text = await res.text();
+            lastResponseRaw = text;
+            lastResponseHeaders = [...res.headers.entries()];
+            const size = new Blob([text]).size;
+
+            currentRequest.response = {
+                status: res.status, statusText: res.statusText,
+                time: elapsed, size: size, body: text, headers: lastResponseHeaders
+            };
+
+            showStatus(res.status, res.statusText);
+            respTime.textContent = elapsed + ' ms';
+            respSize.textContent = formatBytes(size);
+            renderResponseBody();
+            saveState(); // Auto-save response
+
+        } catch (err) {
+            showStatus(0, 'Network Error');
+            respBody.innerHTML = `<div style="color:var(--err); text-align:center; padding:20px;">⚠ ${escapeHtml(err.message)}<br><span style="color:var(--muted); font-size:12px;">Check CORS, URL, or network connection.</span></div>`;
+            currentRequest.response = null;
+        } finally {
+            sendBtn.disabled = false; sendBtn.textContent = 'Send';
+        }
+    }
+
+    function showStatus(code, text) {
+        statusPill.style.display = 'inline-block';
+        statusPill.textContent = code ? `${code} ${text}` : text;
+        statusPill.className = '';
+        if (code >= 200 && code < 300) statusPill.classList.add('s2');
+        else if (code >= 300 && code < 400) statusPill.classList.add('s3');
+        else if (code >= 400 && code < 500) statusPill.classList.add('s4');
+        else statusPill.classList.add('s5');
+    }
+
+    function renderResponseBody() {
+        const box = respBody;
+        if (currentRespTab === 'headers') {
+            if (!lastResponseHeaders || lastResponseHeaders.length === 0) {
+                box.innerHTML = '<div class="muted">No headers</div>';
+                return;
+            }
+            box.innerHTML = lastResponseHeaders.map(([k, v]) =>
+                `<div><span class="json-key">${escapeHtml(k)}</span>: ${escapeHtml(v)}</div>`
+            ).join('');
+            return;
+        }
+        if (!lastResponseRaw) {
+            box.innerHTML = '<div id="respPlaceholder">Send a request to see the response here.</div>';
+            return;
+        }
+        try {
+            const obj = JSON.parse(lastResponseRaw);
+            box.innerHTML = syntaxHighlight(JSON.stringify(obj, null, 2));
+        } catch (_) {
+            box.textContent = lastResponseRaw;
+        }
+    }
+
+    function syntaxHighlight(json) {
+        json = escapeHtml(json);
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false)\b|null|-?\d+(\.\d+)?([eE][+-]?\d+)?)/g, match => {
+            let cls = 'json-num';
+            if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-str';
+            else if (/true|false/.test(match)) cls = 'json-bool';
+            else if (/null/.test(match)) cls = 'json-null';
+            return `<span class="${cls}">${match}</span>`;
+        });
+    }
+
+    $('copyRespBtn').onclick = () => {
+        if (!lastResponseRaw) return;
+        navigator.clipboard.writeText(lastResponseRaw).then(() => showToast('Response copied!', 'success'));
+    };
+
+    // ----- TABS -----
+    document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.pane').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            $('pane-' + t.dataset.tab).classList.add('active');
+        };
+    });
+    document.querySelectorAll('#respTabs span').forEach(s => {
+        s.onclick = () => {
+            document.querySelectorAll('#respTabs span').forEach(x => x.classList.remove('active'));
+            s.classList.add('active');
+            currentRespTab = s.dataset.rt;
+            renderResponseBody();
+        };
+    });
+
+    // ----- EXPORT -----
+    function openExportModal() {
+        const list = $('expCollectionList');
+        list.innerHTML = '';
+        state.collections.forEach(col => {
+            const div = document.createElement('div');
+            div.className = 'io-item';
+            div.innerHTML = `
+                <input type="checkbox" id="exp_${col.id}" checked>
+                <label for="exp_${col.id}">${escapeHtml(col.name)}</label>
+                <span class="count">${col.requests.length} req</span>
+            `;
+            list.appendChild(div);
+        });
+        $('exportModal').classList.add('open');
+    }
+
+    $('exportBtn').onclick = openExportModal;
+    $('closeExportBtn').onclick = () => $('exportModal').classList.remove('open');
+    
+    $('expSelectAll').onclick = () => document.querySelectorAll('#expCollectionList input').forEach(cb => cb.checked = true);
+    $('expDeselectAll').onclick = () => document.querySelectorAll('#expCollectionList input').forEach(cb => cb.checked = false);
+
+    function generateExportData() {
+        const selectedColIds = Array.from(document.querySelectorAll('#expCollectionList input:checked'))
+            .map(cb => cb.id.replace('exp_', ''));
+        
+        const includeEnvs = $('expIncludeEnvs').checked;
+
+        return {
+            version: '2.0',
+            exportedAt: new Date().toISOString(),
+            collections: state.collections
+                .filter(c => selectedColIds.includes(c.id))
+                .map(c => ({
+                    id: c.id, name: c.name,
+                    requests: c.requests.map(r => ({
+                        id: r.id, name: r.name, method: r.method, url: r.url,
+                        params: r.params, headers: r.headers, auth: r.auth,
+                        bodyType: r.bodyType, body: r.body, response: r.response
+                    }))
+                })),
+            environments: includeEnvs ? state.environments : []
+        };
+    }
+
+    $('copyExportBtn').onclick = () => {
+        const data = JSON.stringify(generateExportData(), null, 2);
+        navigator.clipboard.writeText(data).then(() => showToast('JSON copied to clipboard!', 'success'));
+    };
+
+    $('downloadExportBtn').onclick = () => {
+        const data = JSON.stringify(generateExportData(), null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `api-tester-export-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('File downloaded!', 'success');
+        $('exportModal').classList.remove('open');
+    };
+
+    // ----- IMPORT -----
+    let parsedImportData = null;
+
+    function openImportModal() {
+        $('importTextarea').value = '';
+        $('importSelectionArea').style.display = 'none';
+        $('confirmImportBtn').disabled = true;
+        parsedImportData = null;
+        $('importModal').classList.add('open');
+    }
+
+    $('importBtn').onclick = openImportModal;
+    $('closeImportBtn').onclick = $('cancelImportBtn').onclick = () => $('importModal').classList.remove('open');
+
+    function processImportText(text) {
+        try {
+            const data = JSON.parse(text);
+            if (!data.collections && !data.environments) throw new Error('Invalid format');
+            parsedImportData = data;
+            
+            const colList = $('impCollectionList');
+            colList.innerHTML = '';
+            (data.collections || []).forEach((col, i) => {
+                const div = document.createElement('div');
+                div.className = 'io-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="imp_c_${i}" checked>
+                    <label for="imp_c_${i}">${escapeHtml(col.name || 'Unnamed')}</label>
+                    <span class="count">${(col.requests||[]).length} req</span>
+                `;
+                colList.appendChild(div);
+            });
+            $('impCollectionsWrap').style.display = (data.collections || []).length > 0 ? 'block' : 'none';
+
+            const envList = $('impEnvList');
+            envList.innerHTML = '';
+            (data.environments || []).forEach((env, i) => {
+                const div = document.createElement('div');
+                div.className = 'io-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="imp_e_${i}" checked>
+                    <label for="imp_e_${i}">${escapeHtml(env.name || 'Unnamed')}</label>
+                    <span class="count">${(env.variables||[]).length} vars</span>
+                `;
+                envList.appendChild(div);
+            });
+            $('impEnvsWrap').style.display = (data.environments || []).length > 0 ? 'block' : 'none';
+
+            $('importSelectionArea').style.display = 'block';
+            $('confirmImportBtn').disabled = false;
+        } catch (err) {
+            showToast('Invalid JSON: ' + err.message, 'error');
+            $('importSelectionArea').style.display = 'none';
+            $('confirmImportBtn').disabled = true;
+        }
+    }
+
+    $('importPasteBtn').onclick = () => {
+        navigator.clipboard.readText().then(text => {
+            $('importTextarea').value = text;
+            processImportText(text);
+        }).catch(() => showToast('Please paste manually', 'info'));
+    };
+
+    $('importFileBtn').onclick = () => $('importFileInput').click();
+    $('importFileInput').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            $('importTextarea').value = ev.target.result;
+            processImportText(ev.target.result);
+        };
+        reader.readAsText(file);
+    };
+
+    $('importTextarea').oninput = (e) => processImportText(e.target.value);
+
+    $('impSelectAll').onclick = () => document.querySelectorAll('#importSelectionArea input').forEach(cb => cb.checked = true);
+    $('impDeselectAll').onclick = () => document.querySelectorAll('#importSelectionArea input').forEach(cb => cb.checked = false);
+
+    $('confirmImportBtn').onclick = () => {
+        if (!parsedImportData) return;
+        
+        let colsImported = 0;
+        const selectedCols = Array.from(document.querySelectorAll('#impCollectionList input:checked'))
+            .map(cb => parseInt(cb.id.replace('imp_c_', '')));
+            
+        selectedCols.forEach(idx => {
+            const impCol = parsedImportData.collections[idx];
+            if (!impCol) return;
+            
+            // Check for name collision
+            let newName = impCol.name || 'Imported';
+            if (state.collections.some(c => c.name === newName)) {
+                newName += ' (Copy)';
+            }
+            
+            const newCol = blankCollection(newName);
+            (impCol.requests || []).forEach(r => {
+                const newReq = blankRequest(r.name);
+                Object.assign(newReq, {
+                    method: r.method || 'GET', url: r.url || '',
+                    params: r.params || [{ k: '', v: '', on: true }],
+                    headers: r.headers || [{ k: '', v: '', on: true }],
+                    auth: r.auth || { type: 'none' },
+                    bodyType: r.bodyType || 'none', body: r.body || '',
+                    response: r.response || null
+                });
+                newReq.id = uid(); // New ID to prevent conflicts
+                newCol.requests.push(newReq);
+            });
+            state.collections.push(newCol);
+            colsImported++;
+        });
+
+        let envsImported = 0;
+        const selectedEnvs = Array.from(document.querySelectorAll('#impEnvList input:checked'))
+            .map(cb => parseInt(cb.id.replace('imp_e_', '')));
+            
+        selectedEnvs.forEach(idx => {
+            const impEnv = parsedImportData.environments[idx];
+            if (!impEnv) return;
+            
+            let newName = impEnv.name || 'Imported Env';
+            if (state.environments.some(e => e.name === newName)) {
+                newName += ' (Copy)';
+            }
+            
+            const newEnv = {
+                id: uid(),
+                name: newName,
+                variables: (impEnv.variables || []).map(v => ({ k: v.k, v: v.v, on: true }))
+            };
+            state.environments.push(newEnv);
+            envsImported++;
+        });
+
+        saveState();
+        renderHistory();
+        renderEnvSelect();
+        $('importModal').classList.remove('open');
+        showToast(`Imported ${colsImported} collections, ${envsImported} environments`, 'success');
+    };
+
+    // ----- KEYBOARD SHORTCUTS -----
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + Enter to Send
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            sendRequest();
+        }
+        // Ctrl/Cmd + S to Save (Just triggers a save state since auto-save is on, but good for feedback)
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            saveState();
+            showToast('Saved', 'success');
+        }
+        // Escape to close modals
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+        }
+    });
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.classList.remove('open');
+        });
+    });
+
+    // ----- INIT -----
+    const hasData = loadState();
+    if (!hasData || state.collections.length === 0) {
+        const col = blankCollection('Getting Started');
+        const req = blankRequest('Example GET');
+        req.url = 'https://jsonplaceholder.typicode.com/posts/1';
+        col.requests.push(req);
+        state.collections.push(col);
+        state.activeColId = col.id;
+        state.activeReqId = req.id;
+        currentRequest = req;
+        saveState();
+    } else {
+        // Restore last active
+        if (state.activeColId && state.activeReqId) {
+            const col = state.collections.find(c => c.id === state.activeColId);
+            if (col) {
+                const req = col.requests.find(r => r.id === state.activeReqId);
+                if (req) currentRequest = req;
+            }
+        }
+        if (!currentRequest && state.collections.length > 0 && state.collections[0].requests.length > 0) {
+            state.activeColId = state.collections[0].id;
+            state.activeReqId = state.collections[0].requests[0].id;
+            currentRequest = state.collections[0].requests[0];
+        }
+    }
+
+    renderEnvSelect();
+    loadCurrentIntoForm();
+    renderHistory();
+
+})();
 </script>
 </body>
 </html>
